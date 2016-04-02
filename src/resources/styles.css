@@ -1,0 +1,25 @@
+.background {
+    -fx-background-color: black;
+}
+
+.paddle {
+    -fx-fill: aliceblue;
+}
+
+.ball {
+    -fx-fill: white;
+    -fx-border-color: deepskyblue;
+}
+
+.p1-score {
+    -fx-padding: 10px;
+    -fx-text-fill: white;
+    -fx-font-size: 25px;
+
+}
+
+.p2-score {
+    -fx-padding: 10px;
+    -fx-text-fill: white;
+    -fx-font-size: 25px;
+}
