@@ -17,7 +17,7 @@ public class Ball implements PongConstants {
         this.height = height;
         this.x = x;
         this.y = y;
-        this.xVel = 5;
+        this.xVel = 3;
         this.yVel = (new Random().nextInt() % 3) + 2;
         this.rect = new Rectangle(x, y, width, height);
     }
@@ -30,13 +30,23 @@ public class Ball implements PongConstants {
     }
 
     private void correctCollision() {
-        if (y < 0)
+        if (y < 0) {
             y = 0;
-        else if (y > GAME_HEIGHT)
+            yVel = -yVel;
+        }
+        else if (y > GAME_HEIGHT) {
             y = GAME_HEIGHT - height;
-        else
-            return;
-        yVel = -yVel;
+            yVel = -yVel;
+        }
+
+        if (x < 0) {
+            x = 0;
+            xVel = -xVel;
+        }
+        else if (x + width > GAME_WIDTH) {
+            x = GAME_WIDTH - width;
+            xVel = -xVel;
+        }
     }
 
     public void onCollideWith(Paddle p) {

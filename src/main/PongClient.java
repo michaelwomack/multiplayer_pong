@@ -183,7 +183,7 @@ public class PongClient extends Application implements PongConstants {
                 p2Score -= 5;
             else
                 p1Score -= 5;
-            ball.reset();
+//            ball.reset();
         }
         render();
     }
