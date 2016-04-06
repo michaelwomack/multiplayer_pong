@@ -12,26 +12,25 @@ import javafx.stage.Stage;
 import models.Ball;
 import models.Paddle;
 
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
-import java.io.IOException;
+import java.io.*;
 import java.net.Socket;
 
 public class PongClient extends Application implements PongConstants {
     private int playerNo, opponentNo;
     private String host = "localhost";
-    private DataInputStream fromServer;
-    private DataOutputStream toServer;
+    private ObjectOutputStream toServer;
+    private ObjectInputStream fromServer;
     private Socket clientSocket;
     private Label p1ScoreLabel, p2ScoreLabel;
     private int p1Score, p2Score;
     private Paddle p1Paddle, p2Paddle, clientPaddle, opponentPaddle;
     private Ball ball;
     private boolean gameOver;
+    private Pane root;
 
     @Override
     public void start(Stage primaryStage) {
-        Pane root = new Pane();
+        root = new Pane();
         root.getStyleClass().add("background");
 
         ImageView lineImage = new ImageView(new Image("resources/line.png"));
@@ -51,13 +50,22 @@ public class PongClient extends Application implements PongConstants {
         p2Paddle = new Paddle(GAME_WIDTH - PADDLE_WIDTH, GAME_HEIGHT / 2 - 40, PADDLE_WIDTH, PADDLE_HEIGHT);
         p1Paddle.getRect().getStyleClass().add("paddle");
         p2Paddle.getRect().getStyleClass().add("paddle");
-        root.getChildren().addAll(p1Paddle.getRect(), p2Paddle.getRect(), ball.getRect());
+
+        render();
+
 
         Scene scene = new Scene(root, GAME_WIDTH, GAME_HEIGHT);
         scene.getStylesheets().add("resources/styles.css");
         primaryStage.setScene(scene);
         primaryStage.setTitle("Pong");
         primaryStage.show();
+
+        scene.setOnKeyPressed(event -> {
+            onKeyPress(event);
+        });
+        scene.setOnKeyReleased(event -> {
+            clientPaddle.stop();
+        });
 
         /* In a new thread, update game mechanics
          * Platform.runLater() for rendering?
@@ -67,9 +75,13 @@ public class PongClient extends Application implements PongConstants {
             try {
                 /* Client connects to server */
                 clientSocket = new Socket(host, 8000);
-                fromServer = new DataInputStream(clientSocket.getInputStream());
-                toServer = new DataOutputStream(clientSocket.getOutputStream());
-                playerNo = fromServer.readInt() == PLAYER1 ? PLAYER1: PLAYER2;
+
+                toServer = new ObjectOutputStream(clientSocket.getOutputStream());
+                fromServer = new ObjectInputStream(clientSocket.getInputStream());
+
+                playerNo = (Integer)fromServer.readObject() == PLAYER1 ? PLAYER1: PLAYER2;
+
+                System.out.println("Player: " + playerNo);
                 opponentNo = playerNo == PLAYER1 ? PLAYER2: PLAYER1;
                 clientPaddle = playerNo == PLAYER1 ? p1Paddle: p2Paddle;
                 opponentPaddle = opponentNo == PLAYER1 ? p1Paddle: p2Paddle;
@@ -77,48 +89,61 @@ public class PongClient extends Application implements PongConstants {
                 System.out.println("You are player " + playerNo + ". Opponent: " + opponentNo);
                 Platform.runLater(() -> primaryStage.setTitle("You are player " + playerNo));
 
-                int gameInit = fromServer.readInt();
-                Thread.sleep(2000);
+
 
             } catch (IOException e) {
                 e.printStackTrace();
-            } catch (InterruptedException e) {
+            }  catch (ClassNotFoundException e) {
                 e.printStackTrace();
             }
             gameOver = false;
 
+
+            GameObjectPositions sendPositions, updatedPositions;
             while (!gameOver) {
                 update();
                 try {
                 /* Send this client's paddle coordinates to server.
                  * Send current velocity
                  */
+                    //Send ball coordinates
 
-                    toServer.writeInt(clientPaddle.getY());
-                    toServer.writeInt(clientPaddle.getVelY());
+                    if (playerNo == PLAYER1)
+                        sendPositions = new GameObjectPositions(ball.getX(), ball.getY(),
+                                        ball.getxVel(), ball.getyVel(), opponentPaddle.getY(),
+                                        opponentPaddle.getVelY());
+                    else {
+                        sendPositions = new GameObjectPositions(opponentPaddle.getY(),
+                                opponentPaddle.getVelY());
+                    }
+                    toServer.writeObject(sendPositions);
 
                     //Send ball x, y, xVel, yVel
                     //Send client and ball data in an object containing all data.
+                    updatedPositions = (GameObjectPositions) fromServer.readObject();
 
-                    int opponentYPos = fromServer.readInt();
-                    int opponentVelY = fromServer.readInt();
-                    opponentPaddle.getRect().setY(opponentYPos);
-                    opponentPaddle.setVelY(opponentVelY);
+                    if (playerNo == PLAYER2) {
+                        ball.setX(updatedPositions.getBallX());
+                        ball.setY(updatedPositions.getBallY());
+                        ball.setxVel(updatedPositions.getBallVelX());
+                        ball.setyVel(updatedPositions.getBallVelY());
+                    }
+
+                    opponentPaddle.getRect().setY(updatedPositions.getOpponentY());
+                    opponentPaddle.setVelY(updatedPositions.getOpponentVelY());
+
+                    /* So frame rate is smooth */
                     Thread.sleep(10);
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 } catch (IOException e) {
                     e.printStackTrace();
+                } catch (ClassNotFoundException e) {
+                    e.printStackTrace();
                 }
             }
         }).start();
 
-        scene.setOnKeyPressed(event -> {
-            onKeyPress(event);
-        });
-        scene.setOnKeyReleased(event -> {
-            clientPaddle.stop();
-        });
     }
 
     private void onKeyPress(KeyEvent e) {
@@ -160,12 +185,7 @@ public class PongClient extends Application implements PongConstants {
                 p1Score -= 5;
             ball.reset();
         }
-        updateScores();
-    }
-
-    private void updateScores() {
-         p1ScoreLabel.setText("Player 1: " + p1Score);
-         p2ScoreLabel.setText("Player 2: " + p2Score);
+        render();
     }
 
     private boolean ballCollide(Paddle p) {
@@ -174,5 +194,11 @@ public class PongClient extends Application implements PongConstants {
 
     public void render() {
         /* TODO */
+        Platform.runLater(() -> {
+            p1ScoreLabel.setText("Player 1: " + p1Score);
+            p2ScoreLabel.setText("Player 2: " + p2Score);
+            root.getChildren().removeAll(p1Paddle.getRect(), p2Paddle.getRect(), ball.getRect());
+            root.getChildren().addAll(p1Paddle.getRect(), p2Paddle.getRect(), ball.getRect());
+        });
     }
 }

@@ -61,6 +61,8 @@ public class Ball implements PongConstants {
     public void reset() {
         rect.setX(GAME_WIDTH / 2 - 12);
         rect.setY(GAME_HEIGHT / 2 - 12);
+        xVel = 4;
+        yVel = (new Random().nextInt() % 3) + 2;
     }
 
     public int getX() {

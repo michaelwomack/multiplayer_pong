@@ -7,16 +7,16 @@ import javafx.scene.control.ScrollPane;
 import javafx.scene.control.TextArea;
 import javafx.stage.Stage;
 
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
-import java.io.IOException;
+import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.Date;
 
 public class Server extends Application implements PongConstants {
     private int sessionNo = 1;
+    private boolean gameOver = false;
     private TextArea textArea = new TextArea();
+
 
     @Override
     public void start(Stage primaryStage) {
@@ -37,16 +37,13 @@ public class Server extends Application implements PongConstants {
                     Socket player1 = serverSocket.accept();
                     Platform.runLater(() -> textArea.appendText("Player 1's IP address: "
                             + player1.getInetAddress().getHostAddress() + '\n'));
-                    new DataOutputStream(player1.getOutputStream()).writeInt(PLAYER1);
 
                     Socket player2 = serverSocket.accept();
                     Platform.runLater(() -> textArea.appendText("Player 2's IP address: "
                             + player2.getInetAddress().getHostAddress() + '\n'));
 
-                    new DataOutputStream(player2.getOutputStream()).writeInt(PLAYER2);
-
                     Platform.runLater(() -> textArea.appendText(new Date() +
-                            ": Starting a new thread for Session " + sessionNo++ + '\n'));
+                            ": Starting a new thread for Session " + ++sessionNo + '\n'));
 
                     //Session handler in new thread
                     new Thread(new SessionHandler(player1, player2)).start();
@@ -61,10 +58,10 @@ public class Server extends Application implements PongConstants {
     class SessionHandler implements Runnable, PongConstants {
         private Socket player1, player2;
 
-        private DataOutputStream toPlayer1;
-        private DataInputStream fromPlayer1;
-        private DataOutputStream toPlayer2;
-        private DataInputStream fromPlayer2;
+        private ObjectOutputStream toPlayer1;
+        private ObjectInputStream fromPlayer1;
+        private ObjectOutputStream toPlayer2;
+        private ObjectInputStream fromPlayer2;
 
         private boolean continuePlaying = true;
 
@@ -76,15 +73,23 @@ public class Server extends Application implements PongConstants {
 
         @Override
         public void run() {
-            try {
-                fromPlayer1 = new DataInputStream(player1.getInputStream());
-                toPlayer1 = new DataOutputStream(player1.getOutputStream());
-                fromPlayer2 = new DataInputStream(player2.getInputStream());
-                toPlayer2 = new DataOutputStream(player2.getOutputStream());
 
+            try {
+                toPlayer1 = new ObjectOutputStream(player1.getOutputStream());
+                toPlayer2 = new ObjectOutputStream(player2.getOutputStream());
+
+                fromPlayer1 = new ObjectInputStream(player1.getInputStream());
+                fromPlayer2 = new ObjectInputStream(player2.getInputStream());
+
+                System.out.println("About to send player numbers");
                 //Send notification to start countdown on client side
-                toPlayer1.writeInt(1);
-                toPlayer2.writeInt(1);
+                toPlayer1.writeObject(PLAYER1);
+                toPlayer2.writeObject(PLAYER2);
+//                toPlayer1.writeInt(PLAYER1);
+//                toPlayer2.writeInt(PLAYER2);
+                System.out.println("Sent");
+
+
 
 
                 /*
@@ -92,22 +97,21 @@ public class Server extends Application implements PongConstants {
                  * and send updated positions to clients
                  */
 
+                GameObjectPositions dataFromPlayer1, dataFromPlayer2;
 
-                while (true) {
+                while (!gameOver) {
+                    /* Read Opponent Coordinates from both and Ball Data from Player 1 */
+                    dataFromPlayer1 = (GameObjectPositions) fromPlayer1.readObject();
+                    dataFromPlayer2 = (GameObjectPositions) fromPlayer2.readObject();
 
-                    int player1YPos = fromPlayer1.readInt();
-                    int player2YPos = fromPlayer2.readInt();
-                    int player1VelY = fromPlayer1.readInt();
-                    int player2VelY = fromPlayer2.readInt();
-
-                    toPlayer1.writeInt(player2YPos);
-                    toPlayer2.writeInt(player1YPos);
-                    toPlayer1.writeInt(player2VelY);
-                    toPlayer2.writeInt(player1VelY);
+                    toPlayer1.writeObject(dataFromPlayer2);
+                    toPlayer2.writeObject(dataFromPlayer1);
                 }
 
 
             } catch (IOException e) {
+                e.printStackTrace();
+            } catch (ClassNotFoundException e) {
                 e.printStackTrace();
             }
         }
