@@ -110,11 +110,11 @@ public class PongClient extends Application implements PongConstants {
 
                     if (playerNo == PLAYER1)
                         sendPositions = new GameObjectPositions(ball.getX(), ball.getY(),
-                                        ball.getxVel(), ball.getyVel(), opponentPaddle.getY(),
-                                        opponentPaddle.getVelY());
+                                        ball.getxVel(), ball.getyVel(), p1Paddle.getY(),
+                                        p1Paddle.getVelY());
                     else {
-                        sendPositions = new GameObjectPositions(opponentPaddle.getY(),
-                                opponentPaddle.getVelY());
+                        sendPositions = new GameObjectPositions(p2Paddle.getY(),
+                                p2Paddle.getVelY());
                     }
                     toServer.writeObject(sendPositions);
 
