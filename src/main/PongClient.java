@@ -33,26 +33,8 @@ public class PongClient extends Application implements PongConstants {
         root = new Pane();
         root.getStyleClass().add("background");
 
-        ImageView lineImage = new ImageView(new Image("resources/line.png"));
-        lineImage.setX(GAME_WIDTH / 2);
-
-        p1ScoreLabel = new Label("Player 1: " + p1Score);
-        p2ScoreLabel = new Label("Player 2: " + p2Score);
-
-        p1ScoreLabel.getStyleClass().add("p1-score");
-        p2ScoreLabel.getStyleClass().add("p2-score");
-        p2ScoreLabel.setLayoutX(GAME_WIDTH - 150);
-        root.getChildren().addAll(lineImage, p1ScoreLabel, p2ScoreLabel);
-
-        ball = new Ball(25, 25, GAME_WIDTH / 2 - 12, GAME_HEIGHT / 2 - 12);
-        ball.getRect().getStyleClass().add("ball");
-        p1Paddle = new Paddle(0, GAME_HEIGHT / 2 - 40, PADDLE_WIDTH, PADDLE_HEIGHT);
-        p2Paddle = new Paddle(GAME_WIDTH - PADDLE_WIDTH, GAME_HEIGHT / 2 - 40, PADDLE_WIDTH, PADDLE_HEIGHT);
-        p1Paddle.getRect().getStyleClass().add("paddle");
-        p2Paddle.getRect().getStyleClass().add("paddle");
-
+        initObjects();
         render();
-
 
         Scene scene = new Scene(root, GAME_WIDTH, GAME_HEIGHT);
         scene.getStylesheets().add("resources/styles.css");
@@ -157,17 +139,27 @@ public class PongClient extends Application implements PongConstants {
         }
     }
 
-    public void init() {
-        /* TODO
-         * initializes instances of game objects
-         * */
+    public void initObjects() {
+        ImageView lineImage = new ImageView(new Image("resources/line.png"));
+        lineImage.setX(GAME_WIDTH / 2);
+
+        p1ScoreLabel = new Label("Player 1: " + p1Score);
+        p2ScoreLabel = new Label("Player 2: " + p2Score);
+
+        p1ScoreLabel.getStyleClass().add("p1-score");
+        p2ScoreLabel.getStyleClass().add("p2-score");
+        p2ScoreLabel.setLayoutX(GAME_WIDTH - 160);
+        root.getChildren().addAll(lineImage, p1ScoreLabel, p2ScoreLabel);
+
+        ball = new Ball(25, 25, GAME_WIDTH / 2 - 12, GAME_HEIGHT / 2 - 12);
+        ball.getRect().getStyleClass().add("ball");
+        p1Paddle = new Paddle(0, GAME_HEIGHT / 2 - 40, PADDLE_WIDTH, PADDLE_HEIGHT);
+        p2Paddle = new Paddle(GAME_WIDTH - PADDLE_WIDTH, GAME_HEIGHT / 2 - 40, PADDLE_WIDTH, PADDLE_HEIGHT);
+        p1Paddle.getRect().getStyleClass().add("paddle");
+        p2Paddle.getRect().getStyleClass().add("paddle");
     }
 
     public void update() {
-        /* TODO
-         * updates both paddles and ball
-         * and checks collisions
-         */
         p1Paddle.update();
         p2Paddle.update();
         ball.update();
@@ -180,9 +172,9 @@ public class PongClient extends Application implements PongConstants {
             ball.onCollideWith(p2Paddle);
         } else if (ball.isDead()) {
             if (ball.getX() < GAME_WIDTH / 2)
-                p2Score -= 5;
+                p1Score -= 1;
             else
-                p1Score -= 5;
+                p2Score -= 1;
 
         }
         render();

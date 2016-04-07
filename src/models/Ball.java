@@ -65,7 +65,7 @@ public class Ball implements PongConstants {
     }
 
     public boolean isDead() {
-        return (x < 0 || x + width > GAME_WIDTH);
+        return (x <= 0 || x + width >= GAME_WIDTH);
     }
 
     public void reset() {
