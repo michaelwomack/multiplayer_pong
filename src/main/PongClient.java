@@ -30,9 +30,6 @@ public class PongClient extends Application implements PongConstants {
 
     @Override
     public void start(Stage primaryStage) {
-        root = new Pane();
-        root.getStyleClass().add("background");
-
         initObjects();
         render();
 
@@ -49,10 +46,6 @@ public class PongClient extends Application implements PongConstants {
             clientPaddle.stop();
         });
 
-        /* In a new thread, update game mechanics
-         * Platform.runLater() for rendering?
-         */
-
         new Thread(() -> {
             try {
                 /* Client connects to server */
@@ -61,21 +54,20 @@ public class PongClient extends Application implements PongConstants {
                 toServer = new ObjectOutputStream(clientSocket.getOutputStream());
                 fromServer = new ObjectInputStream(clientSocket.getInputStream());
 
-                playerNo = (Integer)fromServer.readObject() == PLAYER1 ? PLAYER1: PLAYER2;
+                playerNo = (Integer) fromServer.readObject() == PLAYER1 ? PLAYER1 : PLAYER2;
 
                 System.out.println("Player: " + playerNo);
-                opponentNo = playerNo == PLAYER1 ? PLAYER2: PLAYER1;
-                clientPaddle = playerNo == PLAYER1 ? p1Paddle: p2Paddle;
-                opponentPaddle = opponentNo == PLAYER1 ? p1Paddle: p2Paddle;
+                opponentNo = playerNo == PLAYER1 ? PLAYER2 : PLAYER1;
+                clientPaddle = playerNo == PLAYER1 ? p1Paddle : p2Paddle;
+                opponentPaddle = opponentNo == PLAYER1 ? p1Paddle : p2Paddle;
 
                 System.out.println("You are player " + playerNo + ". Opponent: " + opponentNo);
                 Platform.runLater(() -> primaryStage.setTitle("You are player " + playerNo));
 
 
-
             } catch (IOException e) {
                 e.printStackTrace();
-            }  catch (ClassNotFoundException e) {
+            } catch (ClassNotFoundException e) {
                 e.printStackTrace();
             }
             gameOver = false;
@@ -85,23 +77,17 @@ public class PongClient extends Application implements PongConstants {
             while (!gameOver) {
                 update();
                 try {
-                /* Send this client's paddle coordinates to server.
-                 * Send current velocity
-                 */
-                    //Send ball coordinates
 
                     if (playerNo == PLAYER1)
                         sendPositions = new GameObjectPositions(ball.getX(), ball.getY(),
-                                        ball.getxVel(), ball.getyVel(), p1Paddle.getY(),
-                                        p1Paddle.getVelY());
+                                ball.getxVel(), ball.getyVel(), p1Paddle.getY(),
+                                p1Paddle.getVelY());
                     else {
                         sendPositions = new GameObjectPositions(p2Paddle.getY(),
                                 p2Paddle.getVelY());
                     }
                     toServer.writeObject(sendPositions);
 
-                    //Send ball x, y, xVel, yVel
-                    //Send client and ball data in an object containing all data.
                     updatedPositions = (GameObjectPositions) fromServer.readObject();
 
                     if (playerNo == PLAYER2) {
@@ -140,6 +126,8 @@ public class PongClient extends Application implements PongConstants {
     }
 
     public void initObjects() {
+        root = new Pane();
+        root.getStyleClass().add("background");
         ImageView lineImage = new ImageView(new Image("resources/line.png"));
         lineImage.setX(GAME_WIDTH / 2);
 
@@ -164,6 +152,7 @@ public class PongClient extends Application implements PongConstants {
         p2Paddle.update();
         ball.update();
 
+
         if (ballCollide(p1Paddle)) {
             p1Score++;
             ball.onCollideWith(p1Paddle);
@@ -177,7 +166,14 @@ public class PongClient extends Application implements PongConstants {
                 p2Score -= 1;
 
         }
+        checkGameStatus();
         render();
+    }
+
+    public void checkGameStatus() {
+        if (p1Score >= 10 || p2Score >= 10) {
+            gameOver = true;
+        }
     }
 
     private boolean ballCollide(Paddle p) {
@@ -185,7 +181,6 @@ public class PongClient extends Application implements PongConstants {
     }
 
     public void render() {
-        /* TODO */
         Platform.runLater(() -> {
             p1ScoreLabel.setText("Player 1: " + p1Score);
             p2ScoreLabel.setText("Player 2: " + p2Score);
