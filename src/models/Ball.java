@@ -34,7 +34,7 @@ public class Ball implements PongConstants {
             y = 0;
             yVel = -yVel;
         }
-        else if (y > GAME_HEIGHT) {
+        else if (y + height > GAME_HEIGHT) {
             y = GAME_HEIGHT - height;
             yVel = -yVel;
         }

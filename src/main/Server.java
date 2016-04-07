@@ -81,16 +81,9 @@ public class Server extends Application implements PongConstants {
                 fromPlayer1 = new ObjectInputStream(player1.getInputStream());
                 fromPlayer2 = new ObjectInputStream(player2.getInputStream());
 
-                System.out.println("About to send player numbers");
                 //Send notification to start countdown on client side
                 toPlayer1.writeObject(PLAYER1);
                 toPlayer2.writeObject(PLAYER2);
-//                toPlayer1.writeInt(PLAYER1);
-//                toPlayer2.writeInt(PLAYER2);
-                System.out.println("Sent");
-
-
-
 
                 /*
                  * Should continously run to check for game completion
@@ -98,16 +91,19 @@ public class Server extends Application implements PongConstants {
                  */
 
                 GameObjectPositions dataFromPlayer1, dataFromPlayer2;
-
-                while (!gameOver) {
+                int gameStatus = 0;
+                while (gameStatus != PLAYER1_WON || gameStatus != PLAYER2_WON) {
                     /* Read Opponent Coordinates from both and Ball Data from Player 1 */
                     dataFromPlayer1 = (GameObjectPositions) fromPlayer1.readObject();
                     dataFromPlayer2 = (GameObjectPositions) fromPlayer2.readObject();
 
                     toPlayer1.writeObject(dataFromPlayer2);
                     toPlayer2.writeObject(dataFromPlayer1);
+
+                    gameStatus = dataFromPlayer1.getGameStatus();
                 }
 
+                /* Send winner to clients */
 
             } catch (IOException e) {
                 e.printStackTrace();

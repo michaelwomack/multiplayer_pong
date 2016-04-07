@@ -174,7 +174,7 @@ public class PongClient extends Application implements PongConstants {
 
         if (ballCollide(p1Paddle)) {
             p1Score++;
-            ball.onCollideWith(p2Paddle);
+            ball.onCollideWith(p1Paddle);
         } else if (ballCollide(p2Paddle)) {
             p2Score++;
             ball.onCollideWith(p2Paddle);
@@ -183,7 +183,7 @@ public class PongClient extends Application implements PongConstants {
                 p2Score -= 5;
             else
                 p1Score -= 5;
-//            ball.reset();
+
         }
         render();
     }
