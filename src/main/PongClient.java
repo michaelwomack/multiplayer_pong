@@ -29,7 +29,7 @@ public class PongClient extends Application implements PongConstants {
     private Pane root;
 
     @Override
-    public void start(Stage primaryStage) throws InterruptedException {
+    public void start(Stage primaryStage) {
         initObjects();
         render();
 
@@ -111,6 +111,7 @@ public class PongClient extends Application implements PongConstants {
                 } catch (ClassNotFoundException e) {
                     e.printStackTrace();
                 }
+                checkGameStatus();
             }
 
             displayWinner();
@@ -156,7 +157,6 @@ public class PongClient extends Application implements PongConstants {
         p2Paddle.update();
         ball.update();
 
-
         if (ballCollide(p1Paddle)) {
             p1Score++;
             ball.onCollideWith(p1Paddle);
@@ -170,7 +170,7 @@ public class PongClient extends Application implements PongConstants {
                 p2Score -= 1;
 
         }
-        checkGameStatus();
+
         render();
     }
 
