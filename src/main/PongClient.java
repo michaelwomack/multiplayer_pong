@@ -17,7 +17,7 @@ import java.net.Socket;
 
 public class PongClient extends Application implements PongConstants {
     private int playerNo, opponentNo;
-    private String host = "localhost";
+    private String host = "localhost", winner;
     private ObjectOutputStream toServer;
     private ObjectInputStream fromServer;
     private Socket clientSocket;
@@ -29,7 +29,7 @@ public class PongClient extends Application implements PongConstants {
     private Pane root;
 
     @Override
-    public void start(Stage primaryStage) {
+    public void start(Stage primaryStage) throws InterruptedException {
         initObjects();
         render();
 
@@ -63,17 +63,19 @@ public class PongClient extends Application implements PongConstants {
 
                 System.out.println("You are player " + playerNo + ". Opponent: " + opponentNo);
                 Platform.runLater(() -> primaryStage.setTitle("You are player " + playerNo));
-
+                countDownToStart();
 
             } catch (IOException e) {
                 e.printStackTrace();
             } catch (ClassNotFoundException e) {
                 e.printStackTrace();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
             }
             gameOver = false;
-
-
             GameObjectPositions sendPositions, updatedPositions;
+
+
             while (!gameOver) {
                 update();
                 try {
@@ -110,8 +112,10 @@ public class PongClient extends Application implements PongConstants {
                     e.printStackTrace();
                 }
             }
-        }).start();
 
+            displayWinner();
+
+        }).start();
     }
 
     private void onKeyPress(KeyEvent e) {
@@ -170,10 +174,41 @@ public class PongClient extends Application implements PongConstants {
         render();
     }
 
+    public void countDownToStart() throws InterruptedException {
+        Label numLabel = new Label();
+        numLabel.getStyleClass().add("timer-text");
+        numLabel.setLayoutX(GAME_WIDTH / 2 - 15);
+        numLabel.setLayoutY(GAME_HEIGHT / 2 - 25);
+
+        Platform.runLater(() -> root.getChildren().add(numLabel));
+        for (int i = 5; i > 0; i--) {
+            displayNum(numLabel, i);
+            Thread.sleep(1000);
+        }
+        Platform.runLater(() -> root.getChildren().remove(numLabel));
+    }
+
+    private void displayNum(Label numLabel, int currentNum) {
+        Platform.runLater(() -> {
+            root.getChildren().remove(numLabel);
+            numLabel.setText(String.valueOf(currentNum));
+            root.getChildren().add(numLabel);
+        });
+    }
+
     public void checkGameStatus() {
         if (p1Score >= 10 || p2Score >= 10) {
             gameOver = true;
+            winner = p1Score >= 10 ? "Player 1" : "Player 2";
         }
+    }
+
+    public void displayWinner() {
+        Label winnerLabel = new Label(winner + " Wins!");
+        winnerLabel.getStyleClass().add("winner-text");
+        winnerLabel.setLayoutX(GAME_WIDTH / 2 - 150);
+        winnerLabel.setLayoutY(GAME_HEIGHT / 2);
+        Platform.runLater(() -> root.getChildren().add(winnerLabel));
     }
 
     private boolean ballCollide(Paddle p) {

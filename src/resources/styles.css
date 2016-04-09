@@ -23,3 +23,13 @@
     -fx-text-fill: white;
     -fx-font-size: 25px;
 }
+
+.timer-text {
+    -fx-text-fill: dodgerblue;
+    -fx-font-size: 75px;
+}
+
+.winner-text {
+    -fx-text-fill: dodgerblue;
+    -fx-font-size: 50px;
+}
