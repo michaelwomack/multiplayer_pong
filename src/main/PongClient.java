@@ -11,6 +11,7 @@ import javafx.scene.control.TextField;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.KeyEvent;
+import javafx.scene.layout.ColumnConstraints;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.Pane;
 
@@ -21,7 +22,6 @@ import models.Player;
 
 import java.io.*;
 import java.net.Socket;
-import java.net.UnknownHostException;
 
 public class PongClient extends Application implements PongConstants {
     private String host, port, winner;
@@ -64,7 +64,8 @@ public class PongClient extends Application implements PongConstants {
         Label nameLabel = new Label("Name");
         TextField nameTextField = new TextField();
 
-        Button submitBtn = new Button("play");
+        Button submitBtn = new Button("Play");
+        submitBtn.setMinWidth(100);
         errorLabel = new Label();
         errorLabel.getStyleClass().add("error");
 
@@ -79,7 +80,7 @@ public class PongClient extends Application implements PongConstants {
         formPane.add(portTextField, 1, 1);
         formPane.add(nameLabel, 0, 2);
         formPane.add(nameTextField, 1, 2);
-        formPane.add(submitBtn, 0, 3);
+        formPane.add(submitBtn, 1, 3);
         formPane.add(errorLabel, 1, 4);
 
         submitBtn.setOnAction(e -> {
@@ -87,25 +88,30 @@ public class PongClient extends Application implements PongConstants {
             port = portTextField.getText().trim();
             String playerName = nameTextField.getText().trim();
             try {
-                clientSocket = new Socket(host, Integer.parseInt(port));
                 if ((host.equals("") || port.equals("") || playerName.equals("")))
-                    errorLabel.setText("Field cannot be empty");
+                    throw new IllegalArgumentException();
                 else {
+                    clientSocket = new Socket(host, Integer.parseInt(port));
                     initObjects();
                     player.setName(playerName);
                     render();
                     startGame(stage);
                 }
             } catch (IOException e1) {
-                errorLabel.setText("Could not connect to " + host + ": " + port);
+                errorLabel.setText("Couldn't connect to " + host + ": " + port);
                 e1.printStackTrace();
             } catch (NumberFormatException e2) {
                 errorLabel.setText("Port must be an integer.");
                 e2.printStackTrace();
+            } catch (IllegalArgumentException e3) {
+                errorLabel.setText("Fields cannot be empty");
+                e3.printStackTrace();
             }
         });
 
-        Scene initScene = new Scene(formPane, 250, 180);
+        Scene initScene = new Scene(formPane, 400, 200);
+        initScene.getStylesheets().add("resources/styles.css");
+
         stage.setScene(initScene);
         stage.show();
     }
@@ -156,9 +162,6 @@ public class PongClient extends Application implements PongConstants {
                 Platform.runLater(() -> stage.setTitle("You are player " + playerNo));
                 countDownToStart();
 
-            } catch (UnknownHostException e) {
-                errorLabel.setText("Unknown host. Try again.");
-                setup(stage);
             } catch (IOException e) {
                 e.printStackTrace();
             } catch (ClassNotFoundException e) {
