@@ -2,69 +2,163 @@ package main;
 
 import javafx.application.Application;
 import javafx.application.Platform;
+
+import javafx.geometry.Pos;
 import javafx.scene.Scene;
+import javafx.scene.control.Button;
 import javafx.scene.control.Label;
+import javafx.scene.control.TextField;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.KeyEvent;
+import javafx.scene.layout.GridPane;
 import javafx.scene.layout.Pane;
+
 import javafx.stage.Stage;
 import models.Ball;
 import models.Paddle;
+import models.Player;
 
 import java.io.*;
 import java.net.Socket;
+import java.net.UnknownHostException;
 
 public class PongClient extends Application implements PongConstants {
-    private int playerNo, opponentNo;
-    private String host = "localhost", winner;
+    private String host, port, winner;
     private ObjectOutputStream toServer;
     private ObjectInputStream fromServer;
     private Socket clientSocket;
-    private Label p1ScoreLabel, p2ScoreLabel;
+    private Label p1ScoreLabel, p2ScoreLabel, errorLabel;
     private int p1Score, p2Score;
-    private Paddle p1Paddle, p2Paddle, clientPaddle, opponentPaddle;
+    private String p1Name, p2Name;
+    private Paddle p1Paddle, p2Paddle;
     private Ball ball;
     private boolean gameOver;
     private Pane root;
+    private Player player, opponent;
 
     @Override
     public void start(Stage primaryStage) {
-        initObjects();
-        render();
 
+        setup(primaryStage);
+    }
+
+    private void onKeyPress(KeyEvent e) {
+        switch (e.getCode()) {
+            case UP:
+                player.getPaddle().accelUp();
+                break;
+            case DOWN:
+                player.getPaddle().accelDown();
+                break;
+        }
+    }
+
+    public void setup(Stage stage) {
+        Label hostLabel = new Label("Host");
+        TextField hostTextField = new TextField();
+
+        Label portLabel = new Label("Port");
+        TextField portTextField = new TextField();
+
+        Label nameLabel = new Label("Name");
+        TextField nameTextField = new TextField();
+
+        Button submitBtn = new Button("play");
+        errorLabel = new Label();
+        errorLabel.getStyleClass().add("error");
+
+        GridPane formPane = new GridPane();
+        formPane.setAlignment(Pos.CENTER);
+        formPane.setHgap(10);
+        formPane.setVgap(10);
+
+        formPane.add(hostLabel, 0, 0);
+        formPane.add(hostTextField, 1, 0);
+        formPane.add(portLabel, 0, 1);
+        formPane.add(portTextField, 1, 1);
+        formPane.add(nameLabel, 0, 2);
+        formPane.add(nameTextField, 1, 2);
+        formPane.add(submitBtn, 0, 3);
+        formPane.add(errorLabel, 1, 4);
+
+        submitBtn.setOnAction(e -> {
+            host = hostTextField.getText().trim();
+            port = portTextField.getText().trim();
+            String playerName = nameTextField.getText().trim();
+            try {
+                clientSocket = new Socket(host, Integer.parseInt(port));
+                if ((host.equals("") || port.equals("") || playerName.equals("")))
+                    errorLabel.setText("Field cannot be empty");
+                else {
+                    initObjects();
+                    player.setName(playerName);
+                    render();
+                    startGame(stage);
+                }
+            } catch (IOException e1) {
+                errorLabel.setText("Could not connect to " + host + ": " + port);
+                e1.printStackTrace();
+            } catch (NumberFormatException e2) {
+                errorLabel.setText("Port must be an integer.");
+                e2.printStackTrace();
+            }
+        });
+
+        Scene initScene = new Scene(formPane, 250, 180);
+        stage.setScene(initScene);
+        stage.show();
+    }
+
+    public void startGame(Stage stage) {
         Scene scene = new Scene(root, GAME_WIDTH, GAME_HEIGHT);
         scene.getStylesheets().add("resources/styles.css");
-        primaryStage.setScene(scene);
-        primaryStage.setTitle("Pong");
-        primaryStage.show();
+        stage.setScene(scene);
+        stage.setTitle("Pong");
+        stage.centerOnScreen();
+        stage.show();
 
         scene.setOnKeyPressed(event -> {
             onKeyPress(event);
         });
         scene.setOnKeyReleased(event -> {
-            clientPaddle.stop();
+            player.getPaddle().stop();
         });
 
         new Thread(() -> {
             try {
-                /* Client connects to server */
-                clientSocket = new Socket(host, 8000);
-
                 toServer = new ObjectOutputStream(clientSocket.getOutputStream());
                 fromServer = new ObjectInputStream(clientSocket.getInputStream());
 
-                playerNo = (Integer) fromServer.readObject() == PLAYER1 ? PLAYER1 : PLAYER2;
+                int playerNo = (Integer) fromServer.readObject() == PLAYER1 ? PLAYER1 : PLAYER2;
+                player.setPlayerNo(playerNo);
 
                 System.out.println("Player: " + playerNo);
-                opponentNo = playerNo == PLAYER1 ? PLAYER2 : PLAYER1;
-                clientPaddle = playerNo == PLAYER1 ? p1Paddle : p2Paddle;
-                opponentPaddle = opponentNo == PLAYER1 ? p1Paddle : p2Paddle;
+                int opponentNo = playerNo == PLAYER1 ? PLAYER2 : PLAYER1;
+                opponent.setPlayerNo(opponentNo);
 
-                System.out.println("You are player " + playerNo + ". Opponent: " + opponentNo);
-                Platform.runLater(() -> primaryStage.setTitle("You are player " + playerNo));
+                toServer.writeObject(player.getName());
+                opponent.setName((String) fromServer.readObject());
+
+                Paddle clientPaddle = playerNo == PLAYER1 ? p1Paddle : p2Paddle;
+                Paddle opponentPaddle = opponentNo == PLAYER1 ? p1Paddle : p2Paddle;
+
+                p1Name = playerNo == PLAYER1 ? player.getName() : opponent.getName();
+                p2Name = playerNo != PLAYER1 ? player.getName() : opponent.getName();
+
+                player.setPaddle(clientPaddle);
+                opponent.setPaddle(opponentPaddle);
+
+                System.out.println("You are player "
+                        + player.getPlayerNo()
+                        + ". Opponent: " + opponent.getPlayerNo());
+
+                Platform.runLater(() -> stage.setTitle("You are player " + playerNo));
                 countDownToStart();
 
+            } catch (UnknownHostException e) {
+                errorLabel.setText("Unknown host. Try again.");
+                setup(stage);
             } catch (IOException e) {
                 e.printStackTrace();
             } catch (ClassNotFoundException e) {
@@ -72,35 +166,35 @@ public class PongClient extends Application implements PongConstants {
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
+
             gameOver = false;
             GameObjectPositions sendPositions, updatedPositions;
-
 
             while (!gameOver) {
                 update();
                 try {
 
-                    if (playerNo == PLAYER1)
+                    if (player.getPlayerNo() == PLAYER1)
                         sendPositions = new GameObjectPositions(ball.getX(), ball.getY(),
-                                ball.getxVel(), ball.getyVel(), p1Paddle.getY(),
-                                p1Paddle.getVelY());
+                                ball.getxVel(), ball.getyVel(), player.getPaddle().getY(),
+                                player.getPaddle().getVelY());
                     else {
-                        sendPositions = new GameObjectPositions(p2Paddle.getY(),
-                                p2Paddle.getVelY());
+                        sendPositions = new GameObjectPositions(player.getPaddle().getY(),
+                                player.getPaddle().getVelY());
                     }
                     toServer.writeObject(sendPositions);
 
                     updatedPositions = (GameObjectPositions) fromServer.readObject();
 
-                    if (playerNo == PLAYER2) {
+                    if (player.getPlayerNo() == PLAYER2) {
                         ball.setX(updatedPositions.getBallX());
                         ball.setY(updatedPositions.getBallY());
                         ball.setxVel(updatedPositions.getBallVelX());
                         ball.setyVel(updatedPositions.getBallVelY());
                     }
 
-                    opponentPaddle.getRect().setY(updatedPositions.getOpponentY());
-                    opponentPaddle.setVelY(updatedPositions.getOpponentVelY());
+                    opponent.getPaddle().getRect().setY(updatedPositions.getOpponentY());
+                    opponent.getPaddle().setVelY(updatedPositions.getOpponentVelY());
 
                     /* So frame rate is smooth */
                     Thread.sleep(10);
@@ -119,25 +213,17 @@ public class PongClient extends Application implements PongConstants {
         }).start();
     }
 
-    private void onKeyPress(KeyEvent e) {
-        switch (e.getCode()) {
-            case UP:
-                clientPaddle.accelUp();
-                break;
-            case DOWN:
-                clientPaddle.accelDown();
-                break;
-        }
-    }
-
     public void initObjects() {
         root = new Pane();
         root.getStyleClass().add("background");
         ImageView lineImage = new ImageView(new Image("resources/line.png"));
         lineImage.setX(GAME_WIDTH / 2);
 
-        p1ScoreLabel = new Label("Player 1: " + p1Score);
-        p2ScoreLabel = new Label("Player 2: " + p2Score);
+        p1ScoreLabel = new Label(p1Name + p1Score);
+        p2ScoreLabel = new Label(p2Name + p2Score);
+
+        player = new Player();
+        opponent = new Player();
 
         p1ScoreLabel.getStyleClass().add("p1-score");
         p2ScoreLabel.getStyleClass().add("p2-score");
@@ -168,13 +254,13 @@ public class PongClient extends Application implements PongConstants {
                 p1Score -= 1;
             else
                 p2Score -= 1;
-
         }
 
         render();
     }
 
     public void countDownToStart() throws InterruptedException {
+        System.out.println("CountDown Started!!!!");
         Label numLabel = new Label();
         numLabel.getStyleClass().add("timer-text");
         numLabel.setLayoutX(GAME_WIDTH / 2 - 15);
@@ -199,7 +285,7 @@ public class PongClient extends Application implements PongConstants {
     public void checkGameStatus() {
         if (p1Score >= 10 || p2Score >= 10) {
             gameOver = true;
-            winner = p1Score >= 10 ? "Player 1" : "Player 2";
+            winner = p1Score >= 10 ? p1Name : p2Name;
         }
     }
 
@@ -216,9 +302,13 @@ public class PongClient extends Application implements PongConstants {
     }
 
     public void render() {
+        if (p1Name == null) {
+            p1Name = "Player 1";
+            p2Name = "Player 2";
+        }
         Platform.runLater(() -> {
-            p1ScoreLabel.setText("Player 1: " + p1Score);
-            p2ScoreLabel.setText("Player 2: " + p2Score);
+            p1ScoreLabel.setText(p1Name + ": " + p1Score);
+            p2ScoreLabel.setText(p2Name + ": " + p2Score);
             root.getChildren().removeAll(p1Paddle.getRect(), p2Paddle.getRect(), ball.getRect());
             root.getChildren().addAll(p1Paddle.getRect(), p2Paddle.getRect(), ball.getRect());
         });

@@ -85,6 +85,12 @@ public class Server extends Application implements PongConstants {
                 toPlayer1.writeObject(PLAYER1);
                 toPlayer2.writeObject(PLAYER2);
 
+                String p1Name = (String) fromPlayer1.readObject();
+                String p2Name = (String) fromPlayer2.readObject();
+
+                toPlayer1.writeObject(p2Name);
+                toPlayer2.writeObject(p1Name);
+
                 /*
                  * Should continously run to check for game completion
                  * and send updated positions to clients

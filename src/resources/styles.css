@@ -33,3 +33,12 @@
     -fx-text-fill: dodgerblue;
     -fx-font-size: 50px;
 }
+
+.form-label {
+    -fx-padding: 10px;
+}
+
+.error {
+    -fx-text-fill: darkred;
+    -fx-fill: darkred;
+}

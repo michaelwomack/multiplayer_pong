@@ -2,8 +2,8 @@ package models;
 
 import javafx.scene.shape.Rectangle;
 import main.PongConstants;
+import main.RandomNumberGenerator;
 
-import java.util.Random;
 
 /**
  * Created by michaelwomack on 4/1/16.
@@ -17,8 +17,8 @@ public class Ball implements PongConstants {
         this.height = height;
         this.x = x;
         this.y = y;
-        this.xVel = 3;
-        this.yVel = (new Random().nextInt() % 3) + 2;
+        this.xVel = RandomNumberGenerator.getRandIntBetween(3, 4);
+        this.yVel = RandomNumberGenerator.getRandIntBetween(-3, 3);
         this.rect = new Rectangle(x, y, width, height);
     }
 
@@ -55,6 +55,7 @@ public class Ball implements PongConstants {
         else
             x = p.getX() - width;
         xVel = -xVel;
+        yVel = yVel == 0 ? RandomNumberGenerator.getRandIntBetween(1, 4): yVel;
     }
 
     private void updateRect() {
@@ -72,7 +73,7 @@ public class Ball implements PongConstants {
         rect.setX(GAME_WIDTH / 2 - 12);
         rect.setY(GAME_HEIGHT / 2 - 12);
         xVel = 4;
-        yVel = (new Random().nextInt() % 3) + 2;
+        yVel = RandomNumberGenerator.getRandIntBetween(2, 3);
     }
 
     public int getX() {
