@@ -16,9 +16,7 @@ import java.util.Date;
 
 public class Server extends Application implements PongConstants {
     private int sessionNo = 1;
-    private boolean gameOver = false;
     private TextArea textArea = new TextArea();
-
 
     @Override
     public void start(Stage primaryStage) {
@@ -47,7 +45,6 @@ public class Server extends Application implements PongConstants {
                     Platform.runLater(() -> textArea.appendText(new Date() +
                             ": Starting a new thread for Session " + ++sessionNo + '\n'));
 
-                    //Session handler in new thread
                     new Thread(new SessionHandler(player1, player2)).start();
                 }
             } catch (IOException e) {
@@ -65,8 +62,6 @@ public class Server extends Application implements PongConstants {
         private ObjectOutputStream toPlayer2;
         private ObjectInputStream fromPlayer2;
 
-        private boolean continuePlaying = true;
-
         public SessionHandler(Socket player1, Socket player2) {
             this.player1 = player1;
             this.player2 = player2;
@@ -83,7 +78,6 @@ public class Server extends Application implements PongConstants {
                 fromPlayer1 = new ObjectInputStream(player1.getInputStream());
                 fromPlayer2 = new ObjectInputStream(player2.getInputStream());
 
-                //Send notification to start countdown on client side
                 toPlayer1.writeObject(PLAYER1);
                 toPlayer2.writeObject(PLAYER2);
 
@@ -92,11 +86,6 @@ public class Server extends Application implements PongConstants {
 
                 toPlayer1.writeObject(p2Name);
                 toPlayer2.writeObject(p1Name);
-
-                /*
-                 * Should continously run to check for game completion
-                 * and send updated positions to clients
-                 */
 
                 GameObjectPositions dataFromPlayer1, dataFromPlayer2;
                 int gameStatus = 0;
@@ -111,17 +100,12 @@ public class Server extends Application implements PongConstants {
                     gameStatus = dataFromPlayer1.getGameStatus();
                 }
 
-                /* Send winner to clients */
-
             } catch (IOException e) {
                 e.printStackTrace();
             } catch (ClassNotFoundException e) {
                 e.printStackTrace();
             }
         }
-
-        //implement method for checking game win.
-
     }
 
     public static void main(String[] args) {
