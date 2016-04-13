@@ -16,14 +16,17 @@ import javafx.stage.Stage;
 import main.model.Ball;
 import main.model.Paddle;
 import main.model.Player;
+import main.util.DatagramUtils;
 
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
+import java.io.*;
+import java.net.DatagramSocket;
+import java.net.InetAddress;
 import java.net.Socket;
 
 public class PongClient extends Application implements PongConstants {
-    private String host, port, winner;
+    private String winner;
+    private InetAddress host;
+    private int port, sessionNo;
     private ObjectOutputStream toServer;
     private ObjectInputStream fromServer;
     private Socket clientSocket;
@@ -83,17 +86,19 @@ public class PongClient extends Application implements PongConstants {
         formPane.add(errorLabel, 1, 4);
 
         submitBtn.setOnAction(e -> {
-            host = hostTextField.getText().trim();
-            port = portTextField.getText().trim();
+            String hostStr = hostTextField.getText().trim();
+            String portStr = portTextField.getText().trim();
             String playerName = nameTextField.getText().trim();
             try {
-                if ((host.equals("") || port.equals("") || playerName.equals("")))
+                if ((hostStr.equals("") || portStr.equals("") || playerName.equals("")))
                     throw new IllegalArgumentException();
                 else if (playerName.length() > 8) {
                     errorLabel.setText("Name has max length of 8");
-                }
-                else {
-                    clientSocket = new Socket(host, Integer.parseInt(port));
+                } else {
+                    port = Integer.parseInt(portStr);
+                    host = InetAddress.getByName(hostStr);
+                    clientSocket = new Socket(host, port);
+
                     initObjects();
                     player.setName(playerName);
                     render();
@@ -135,9 +140,12 @@ public class PongClient extends Application implements PongConstants {
 
         new Thread(() -> {
             try {
+
+                /* Initial Request to start game */
                 toServer = new ObjectOutputStream(clientSocket.getOutputStream());
                 fromServer = new ObjectInputStream(clientSocket.getInputStream());
 
+                /* Get player number via TCP socket stream */
                 int playerNo = (Integer) fromServer.readObject() == PLAYER1 ? PLAYER1 : PLAYER2;
                 player.setPlayerNo(playerNo);
 
@@ -154,6 +162,10 @@ public class PongClient extends Application implements PongConstants {
                 p1Name = playerNo == PLAYER1 ? player.getName() : opponent.getName();
                 p2Name = playerNo != PLAYER1 ? player.getName() : opponent.getName();
 
+                /* Matches unique datagram Socket port for each session */
+                sessionNo = (int)fromServer.readObject();
+                port += sessionNo;
+
                 player.setPaddle(clientPaddle);
                 opponent.setPaddle(opponentPaddle);
 
@@ -161,9 +173,18 @@ public class PongClient extends Application implements PongConstants {
                         + player.getPlayerNo()
                         + ". Opponent: " + opponent.getPlayerNo());
 
+                /* Pass in datagram socket representing this client */
+                DatagramSocket datagramSocket = new DatagramSocket();
+                DatagramUtils util = new DatagramUtils(datagramSocket);
+
+                /* Send player number via datagram so server Datagram can identify p1 and p2 */
+                util.sendData(util.serializeData(playerNo), host, port);
+
+                System.out.println("SERVER PORT: " + port);
+
                 Platform.runLater(() -> stage.setTitle("You are player " + playerNo));
                 countDownToStart();
-
+//
             } catch (IOException e) {
                 e.printStackTrace();
             } catch (ClassNotFoundException e) {
@@ -174,6 +195,7 @@ public class PongClient extends Application implements PongConstants {
 
             gameOver = false;
             GameObjectPositions sendPositions, updatedPositions;
+
 
             while (!gameOver) {
                 update();
@@ -186,6 +208,7 @@ public class PongClient extends Application implements PongConstants {
                     else {
                         sendPositions = new GameObjectPositions(player.getPaddle().getY(),
                                 player.getPaddle().getVelY());
+
                     }
                     toServer.writeObject(sendPositions);
 
@@ -318,4 +341,5 @@ public class PongClient extends Application implements PongConstants {
             root.getChildren().addAll(p1Paddle.getRect(), p2Paddle.getRect(), ball.getRect());
         });
     }
+
 }

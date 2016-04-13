@@ -47,5 +47,23 @@ public class GameObjectPositions implements Serializable {
         return opponentYVel;
     }
 
-    public int getGameStatus() { return gameStatus; }
+    public int getGameStatus() {
+        return gameStatus;
+    }
+
+    public void setGameStatus(int gameStatus) {
+        this.gameStatus = gameStatus;
+    }
+
+    @Override
+    public String toString() {
+        return "GameObjectPositions{" +
+                "ballX=" + ballX +
+                ", ballY=" + ballY +
+                ", ballXVel=" + ballXVel +
+                ", ballYVel=" + ballYVel +
+                ", opponentY=" + opponentY +
+                ", opponentYVel=" + opponentYVel +
+                '}';
+    }
 }
