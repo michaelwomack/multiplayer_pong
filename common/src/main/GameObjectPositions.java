@@ -7,11 +7,12 @@ import java.io.Serializable;
  * Created by michaelwomack on 3/31/16.
  */
 public class GameObjectPositions implements Serializable {
-    private int ballX, ballY, ballXVel, ballYVel, opponentY, opponentYVel, gameStatus;
+    private int ballX, ballY, ballXVel, ballYVel, opponentY, opponentYVel, fromPlayer, gameStatus;
 
     public GameObjectPositions(int opponentY, int opponentYVel) {
         this.opponentY = opponentY;
         this.opponentYVel = opponentYVel;
+        this.fromPlayer = 2;
     }
 
     public GameObjectPositions(int ballX, int ballY, int ballVelX, int ballYVel, int opponentY, int opponentYVel) {
@@ -21,6 +22,7 @@ public class GameObjectPositions implements Serializable {
         this.ballYVel = ballYVel;
         this.opponentY = opponentY;
         this.opponentYVel = opponentYVel;
+        this.fromPlayer = 1;
     }
 
     public int getBallX() {
@@ -45,6 +47,10 @@ public class GameObjectPositions implements Serializable {
 
     public int getOpponentVelY() {
         return opponentYVel;
+    }
+
+    public int getFromPlayer() {
+        return fromPlayer;
     }
 
     public int getGameStatus() {

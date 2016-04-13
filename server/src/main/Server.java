@@ -140,12 +140,12 @@ public class Server extends Application implements PongConstants {
 
                 /* Get packets for player1 client and player2 client */
                 DatagramPacket player1Packet = util.receiveData();
-                int playerNo = (int)util.deserializeData(player1Packet.getData());
+                int playerNo = (int) util.deserializeData(player1Packet.getData());
                 System.out.println("Data from player 1: " + util.deserializeData(player1Packet.getData()));
 
                 DatagramPacket player2Packet = util.receiveData();
                 System.out.println("Data from player 2: " + util.deserializeData(player2Packet.getData()));
-                int playerNo2 = (int)util.deserializeData(player2Packet.getData());
+                int playerNo2 = (int) util.deserializeData(player2Packet.getData());
 
                 // Packets may be delivered out of order, if so, switch players
                 if (playerNo == 2 && playerNo2 == 1) {
@@ -162,10 +162,37 @@ public class Server extends Application implements PongConstants {
                 byte[] player1Data = new byte[256];
                 byte[] player2Data = new byte[256];
 
+                DatagramPacket receivedPacket1, receivedPacket2;
+                GameObjectPositions obj1, obj2;
+
                 while (gameStatus != PLAYER1_WON || gameStatus != PLAYER2_WON) {
                     /* Read Opponent Coordinates from both and Ball Data from Player 1 */
 
-                    /* Read data from player 1, send to player 2 */
+                    /* Read data from players packets */
+                    receivedPacket1 = util.receiveData();
+                    receivedPacket2 = util.receiveData();
+
+                    obj1 = (GameObjectPositions) util.deserializeData(receivedPacket1.getData());
+                    obj2 = (GameObjectPositions) util.deserializeData(receivedPacket2.getData());
+
+
+                    /* send data from packet1 to packet2 */
+                    util.sendData(util.serializeData(obj1),
+                            receivedPacket2.getAddress(),
+                            receivedPacket2.getPort());
+
+                    /* send data from packet2 to packet1 */
+                    util.sendData(util.serializeData(obj2),
+                            receivedPacket1.getAddress(),
+                            receivedPacket1.getPort());
+
+                    /* Just in case packet order not correct, use player 1's */
+                    if (obj1.getFromPlayer() == 1)
+                        gameStatus = obj1.getGameStatus();
+                    else
+                        gameStatus = obj2.getGameStatus();
+
+
 
                     /* Read data from player 2, send to player 1 */
 

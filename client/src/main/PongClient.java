@@ -19,6 +19,7 @@ import main.model.Player;
 import main.util.DatagramUtils;
 
 import java.io.*;
+import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.Socket;
@@ -139,6 +140,8 @@ public class PongClient extends Application implements PongConstants {
         });
 
         new Thread(() -> {
+            DatagramSocket datagramSocket = null;
+            DatagramUtils util = null;
             try {
 
                 /* Initial Request to start game */
@@ -174,8 +177,8 @@ public class PongClient extends Application implements PongConstants {
                         + ". Opponent: " + opponent.getPlayerNo());
 
                 /* Pass in datagram socket representing this client */
-                DatagramSocket datagramSocket = new DatagramSocket();
-                DatagramUtils util = new DatagramUtils(datagramSocket);
+                datagramSocket = new DatagramSocket();
+                util = new DatagramUtils(datagramSocket);
 
                 /* Send player number via datagram so server Datagram can identify p1 and p2 */
                 util.sendData(util.serializeData(playerNo), host, port);
@@ -195,7 +198,7 @@ public class PongClient extends Application implements PongConstants {
 
             gameOver = false;
             GameObjectPositions sendPositions, updatedPositions;
-
+            DatagramPacket receivedPacket;
 
             while (!gameOver) {
                 update();
@@ -210,9 +213,12 @@ public class PongClient extends Application implements PongConstants {
                                 player.getPaddle().getVelY());
 
                     }
-                    toServer.writeObject(sendPositions);
+                    //toServer.writeObject(sendPositions);
+                    util.sendData(util.serializeData(sendPositions), host, port);
 
-                    updatedPositions = (GameObjectPositions) fromServer.readObject();
+                    receivedPacket = util.receiveData();
+                    updatedPositions = (GameObjectPositions) util.deserializeData(receivedPacket.getData());
+                    //updatedPositions = (GameObjectPositions) fromServer.readObject();
 
                     if (player.getPlayerNo() == PLAYER2) {
                         ball.setX(updatedPositions.getBallX());
