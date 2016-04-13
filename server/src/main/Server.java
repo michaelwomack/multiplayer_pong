@@ -32,34 +32,14 @@ public class Server extends Application implements PongConstants {
 
                 Platform.runLater(() -> textArea.appendText("Server started...\n\n"));
                 while (true) {
-//                    DatagramSocket serverSocket = new DatagramSocket(port);
-
-
                     Platform.runLater(() -> textArea.appendText("Current session running on port " + port + "\n"));
 
                     Platform.runLater(() -> textArea.appendText(new Date()
                             + " : Waiting for players to join session " + sessionNo + '\n'));
 
-//                    byte receiveData[] = new byte[256];
-//
-//                    DatagramPacket player1 = util.receiveData();
-//                    InetAddress p1Address = player1.getAddress();
-//                    System.out.println("Player 1 Port: " + player1.getPort());
-//                    ByteBuffer buff = ByteBuffer.wrap(player1.getData());
-//                    byte[] data = new byte[buff.limit()];
-//                    buff.get(data);
-//                    System.out.println("Player 1 Data: " + new String(data)
-//                            + " buff limit: " + buff.limit() + "buff remaining: " + buff.remaining());
-
-
                     Socket player1 = serverSocket.accept();
                     Platform.runLater(() -> textArea.appendText("Player 1's IP address: "
                             + player1.getInetAddress().getHostAddress() + '\n'));
-
-//                    DatagramPacket player2 = util.receiveData();
-//                    InetAddress p2Address = player2.getAddress();
-//                    System.out.println("Player 2 Port: " + player2.getPort());
-
 
                     Socket player2 = serverSocket.accept();
                     Platform.runLater(() -> textArea.appendText("Player 2's IP address: "
@@ -131,9 +111,6 @@ public class Server extends Application implements PongConstants {
                 toPlayer1.writeObject(this.sessionNo);
                 toPlayer2.writeObject(this.sessionNo);
 
-                GameObjectPositions dataFromPlayer1, dataFromPlayer2;
-                int gameStatus = 0;
-
                 /* Listen for packets at specified port */
                 socket = new DatagramSocket(this.port);
                 DatagramUtils util = new DatagramUtils(socket);
@@ -158,23 +135,19 @@ public class Server extends Application implements PongConstants {
                 System.out.println("Data from player 1: " + util.deserializeData(player1Packet.getData()));
                 System.out.println("Data from player 2: " + util.deserializeData(player2Packet.getData()));
 
-
-                byte[] player1Data = new byte[256];
-                byte[] player2Data = new byte[256];
-
                 DatagramPacket receivedPacket1, receivedPacket2;
                 GameObjectPositions obj1, obj2;
+                int gameStatus = 0;
 
                 while (gameStatus != PLAYER1_WON || gameStatus != PLAYER2_WON) {
-                    /* Read Opponent Coordinates from both and Ball Data from Player 1 */
 
                     /* Read data from players packets */
                     receivedPacket1 = util.receiveData();
                     receivedPacket2 = util.receiveData();
 
+                    /* deserialize into objects */
                     obj1 = (GameObjectPositions) util.deserializeData(receivedPacket1.getData());
                     obj2 = (GameObjectPositions) util.deserializeData(receivedPacket2.getData());
-
 
                     /* send data from packet1 to packet2 */
                     util.sendData(util.serializeData(obj1),
