@@ -17,305 +17,349 @@ import main.model.Ball;
 import main.model.Paddle;
 import main.model.Player;
 
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
+import java.io.*;
 import java.net.Socket;
 
-public class PongClient extends Application implements PongConstants {
-    private String host, port, winner;
-    private ObjectOutputStream toServer;
-    private ObjectInputStream fromServer;
-    private Socket clientSocket;
-    private Label p1ScoreLabel, p2ScoreLabel, errorLabel;
-    private int p1Score, p2Score;
-    private String p1Name, p2Name;
-    private Paddle p1Paddle, p2Paddle;
-    private Ball ball;
-    private boolean gameOver;
-    private Pane root;
-    private Player player, opponent;
+public class PongClient extends Application implements PongConstants
+{
+	private String host, port, winner;
+	private ObjectOutputStream toServer;
+	private ObjectInputStream fromServer;
+	private Socket clientSocket;
+	private Label p1ScoreLabel, p2ScoreLabel, errorLabel;
+	private int p1Score, p2Score;
+	private String p1Name, p2Name;
+	private Paddle p1Paddle, p2Paddle;
+	private Ball ball;
+	private boolean gameOver;
+	private Pane root;
+	private Player player, opponent;
 
-    @Override
-    public void start(Stage primaryStage) {
+	@Override
+	public void start( Stage primaryStage )
+	{
 
-        setup(primaryStage);
-    }
+		setup( primaryStage );
+	}
 
-    private void onKeyPress(KeyEvent e) {
-        switch (e.getCode()) {
-            case UP:
-                player.getPaddle().accelUp();
-                break;
-            case DOWN:
-                player.getPaddle().accelDown();
-                break;
-        }
-    }
+	private void onKeyPress( KeyEvent e )
+	{
+		switch ( e.getCode() )
+		{
+		case UP:
+			player.getPaddle().accelUp();
+			break;
+		case DOWN:
+			player.getPaddle().accelDown();
+			break;
+		}
+	}
 
-    public void setup(Stage stage) {
-        Label hostLabel = new Label("Host");
-        TextField hostTextField = new TextField();
+	public void setup( Stage stage )
+	{
+		Label hostLabel = new Label( "Host" );
+		TextField hostTextField = new TextField();
 
-        Label portLabel = new Label("Port");
-        TextField portTextField = new TextField();
+		Label portLabel = new Label( "Port" );
+		TextField portTextField = new TextField();
 
-        Label nameLabel = new Label("Name");
-        TextField nameTextField = new TextField();
+		Label nameLabel = new Label( "Name" );
+		TextField nameTextField = new TextField();
 
-        Button submitBtn = new Button("Play");
-        submitBtn.setMinWidth(100);
-        errorLabel = new Label();
-        errorLabel.getStyleClass().add("error");
+		Button submitBtn = new Button( "Play" );
+		submitBtn.setMinWidth( 100 );
+		errorLabel = new Label();
+		errorLabel.getStyleClass().add( "error" );
 
-        GridPane formPane = new GridPane();
-        formPane.setAlignment(Pos.CENTER);
-        formPane.setHgap(10);
-        formPane.setVgap(10);
+		GridPane formPane = new GridPane();
+		formPane.setAlignment( Pos.CENTER );
+		formPane.setHgap( 10 );
+		formPane.setVgap( 10 );
 
-        formPane.add(hostLabel, 0, 0);
-        formPane.add(hostTextField, 1, 0);
-        formPane.add(portLabel, 0, 1);
-        formPane.add(portTextField, 1, 1);
-        formPane.add(nameLabel, 0, 2);
-        formPane.add(nameTextField, 1, 2);
-        formPane.add(submitBtn, 1, 3);
-        formPane.add(errorLabel, 1, 4);
+		formPane.add( hostLabel, 0, 0 );
+		formPane.add( hostTextField, 1, 0 );
+		formPane.add( portLabel, 0, 1 );
+		formPane.add( portTextField, 1, 1 );
+		formPane.add( nameLabel, 0, 2 );
+		formPane.add( nameTextField, 1, 2 );
+		formPane.add( submitBtn, 1, 3 );
+		formPane.add( errorLabel, 1, 4 );
 
-        submitBtn.setOnAction(e -> {
-            host = hostTextField.getText().trim();
-            port = portTextField.getText().trim();
-            String playerName = nameTextField.getText().trim();
-            try {
-                if ((host.equals("") || port.equals("") || playerName.equals("")))
-                    throw new IllegalArgumentException();
-                else if (playerName.length() > 8) {
-                    errorLabel.setText("Name has max length of 8");
-                }
-                else {
-                    clientSocket = new Socket(host, Integer.parseInt(port));
-                    initObjects();
-                    player.setName(playerName);
-                    render();
-                    startGame(stage);
-                }
-            } catch (IOException e1) {
-                errorLabel.setText("Couldn't connect to " + host + ": " + port);
-                e1.printStackTrace();
-            } catch (NumberFormatException e2) {
-                errorLabel.setText("Port must be an integer.");
-                e2.printStackTrace();
-            } catch (IllegalArgumentException e3) {
-                errorLabel.setText("Fields cannot be empty");
-                e3.printStackTrace();
-            }
-        });
+		submitBtn.setOnAction( e -> {
+			host = hostTextField.getText().trim();
+			port = portTextField.getText().trim();
+			String playerName = nameTextField.getText().trim();
+			try
+			{
+				if (( host.equals( "" ) || port.equals( "" ) || playerName.equals( "" ) )) throw new IllegalArgumentException();
+				else if (playerName.length() > 8)
+				{
+					errorLabel.setText( "Name has max length of 8" );
+				}
+				else
+				{
+					clientSocket = new Socket( host, Integer.parseInt( port ) );
+					initObjects();
+					player.setName( playerName );
+					render();
+					startGame( stage );
+				}
+			}
+			catch ( IOException e1 )
+			{
+				errorLabel.setText( "Couldn't connect to " + host + ": " + port );
+				e1.printStackTrace();
+			}
+			catch ( NumberFormatException e2 )
+			{
+				errorLabel.setText( "Port must be an integer." );
+				e2.printStackTrace();
+			}
+			catch ( IllegalArgumentException e3 )
+			{
+				errorLabel.setText( "Fields cannot be empty" );
+				e3.printStackTrace();
+			}
+		} );
 
-        Scene initScene = new Scene(formPane, 400, 200);
-        initScene.getStylesheets().add("styles.css");
+		Scene initScene = new Scene( formPane, 400, 200 );
+		initScene.getStylesheets().add( "styles.css" );
 
-        stage.setScene(initScene);
-        stage.show();
-    }
+		stage.setScene( initScene );
+		stage.show();
+	}
 
-    public void startGame(Stage stage) {
-        Scene scene = new Scene(root, GAME_WIDTH, GAME_HEIGHT);
-        scene.getStylesheets().add("styles.css");
-        stage.setScene(scene);
-        stage.setTitle("Pong");
-        stage.centerOnScreen();
-        stage.show();
+	public void startGame( Stage stage )
+	{
+		Scene scene = new Scene( root, GAME_WIDTH, GAME_HEIGHT );
+		scene.getStylesheets().add( "styles.css" );
+		stage.setScene( scene );
+		stage.setTitle( "Pong" );
+		stage.centerOnScreen();
+		stage.show();
 
-        scene.setOnKeyPressed(event -> {
-            onKeyPress(event);
-        });
-        scene.setOnKeyReleased(event -> {
-            player.getPaddle().stop();
-        });
+		scene.setOnKeyPressed( event -> {
+			onKeyPress( event );
+		} );
+		scene.setOnKeyReleased( event -> {
+			player.getPaddle().stop();
+		} );
 
-        new Thread(() -> {
-            try {
-                toServer = new ObjectOutputStream(clientSocket.getOutputStream());
-                fromServer = new ObjectInputStream(clientSocket.getInputStream());
+		new Thread( () -> {
+			try
+			{
+				toServer = new ObjectOutputStream( new BufferedOutputStream( clientSocket.getOutputStream() ) );
+				System.out.println("To server stream created");
+				toServer.flush();
+				fromServer = new ObjectInputStream( new BufferedInputStream( clientSocket.getInputStream() ) );
+				System.out.println("From server stream created.");
 
-                int playerNo = (Integer) fromServer.readObject() == PLAYER1 ? PLAYER1 : PLAYER2;
-                player.setPlayerNo(playerNo);
+				int playerNo = (Integer) fromServer.readObject() == PLAYER1 ? PLAYER1 : PLAYER2;
+				System.out.println("Read in from player " + playerNo);
+				player.setPlayerNo( playerNo );
 
-                System.out.println("Player: " + playerNo);
-                int opponentNo = playerNo == PLAYER1 ? PLAYER2 : PLAYER1;
-                opponent.setPlayerNo(opponentNo);
+				System.out.println( "Player: " + playerNo );
+				int opponentNo = playerNo == PLAYER1 ? PLAYER2 : PLAYER1;
+				opponent.setPlayerNo( opponentNo );
 
-                toServer.writeObject(player.getName());
-                opponent.setName((String) fromServer.readObject());
+				toServer.writeObject( player.getName() );
+				System.out.println("Name written");
+				toServer.flush();
+				opponent.setName( (String) fromServer.readObject() );
 
-                Paddle clientPaddle = playerNo == PLAYER1 ? p1Paddle : p2Paddle;
-                Paddle opponentPaddle = opponentNo == PLAYER1 ? p1Paddle : p2Paddle;
+				Paddle clientPaddle = playerNo == PLAYER1 ? p1Paddle : p2Paddle;
+				Paddle opponentPaddle = opponentNo == PLAYER1 ? p1Paddle : p2Paddle;
 
-                p1Name = playerNo == PLAYER1 ? player.getName() : opponent.getName();
-                p2Name = playerNo != PLAYER1 ? player.getName() : opponent.getName();
+				p1Name = playerNo == PLAYER1 ? player.getName() : opponent.getName();
+				p2Name = playerNo != PLAYER1 ? player.getName() : opponent.getName();
 
-                player.setPaddle(clientPaddle);
-                opponent.setPaddle(opponentPaddle);
+				player.setPaddle( clientPaddle );
+				opponent.setPaddle( opponentPaddle );
 
-                System.out.println("You are player "
-                        + player.getPlayerNo()
-                        + ". Opponent: " + opponent.getPlayerNo());
+				System.out.println( "You are player " + player.getPlayerNo() + ". Opponent: " + opponent.getPlayerNo() );
 
-                Platform.runLater(() -> stage.setTitle("You are player " + playerNo));
-                countDownToStart();
+				Platform.runLater( () -> stage.setTitle( "You are player " + playerNo ) );
+				countDownToStart();
 
-            } catch (IOException e) {
-                e.printStackTrace();
-            } catch (ClassNotFoundException e) {
-                e.printStackTrace();
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
+			}
+			catch ( IOException e )
+			{
+				e.printStackTrace();
+			}
+			catch ( ClassNotFoundException e )
+			{
+				e.printStackTrace();
+			}
+			catch ( InterruptedException e )
+			{
+				e.printStackTrace();
+			}
 
-            gameOver = false;
-            GameObjectPositions sendPositions, updatedPositions;
+			gameOver = false;
+			GameObjectPositions sendPositions, updatedPositions;
 
-            while (!gameOver) {
-                update();
-                try {
+			while ( !gameOver )
+			{
+				update();
+				try
+				{
 
-                    if (player.getPlayerNo() == PLAYER1)
-                        sendPositions = new GameObjectPositions(ball.getX(), ball.getY(),
-                                ball.getxVel(), ball.getyVel(), player.getPaddle().getY(),
-                                player.getPaddle().getVelY());
-                    else {
-                        sendPositions = new GameObjectPositions(player.getPaddle().getY(),
-                                player.getPaddle().getVelY());
-                    }
-                    toServer.writeObject(sendPositions);
+					if (player.getPlayerNo() == PLAYER1) sendPositions = new GameObjectPositions( ball.getX(), ball.getY(), ball.getxVel(), ball.getyVel(), player.getPaddle().getY(), player.getPaddle().getVelY() );
+					else
+					{
+						sendPositions = new GameObjectPositions( player.getPaddle().getY(), player.getPaddle().getVelY() );
+					}
+					toServer.writeObject( sendPositions );
+					toServer.flush();
 
-                    updatedPositions = (GameObjectPositions) fromServer.readObject();
+					updatedPositions = (GameObjectPositions) fromServer.readObject();
 
-                    if (player.getPlayerNo() == PLAYER2) {
-                        ball.setX(updatedPositions.getBallX());
-                        ball.setY(updatedPositions.getBallY());
-                        ball.setxVel(updatedPositions.getBallVelX());
-                        ball.setyVel(updatedPositions.getBallVelY());
-                    }
+					if (player.getPlayerNo() == PLAYER2)
+					{
+						ball.setX( updatedPositions.getBallX() );
+						ball.setY( updatedPositions.getBallY() );
+						ball.setxVel( updatedPositions.getBallVelX() );
+						ball.setyVel( updatedPositions.getBallVelY() );
+					}
 
-                    opponent.getPaddle().getRect().setY(updatedPositions.getOpponentY());
-                    opponent.getPaddle().setVelY(updatedPositions.getOpponentVelY());
+					opponent.getPaddle().getRect().setY( updatedPositions.getOpponentY() );
+					opponent.getPaddle().setVelY( updatedPositions.getOpponentVelY() );
 
                     /* So frame rate is smooth */
-                    Thread.sleep(10);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                } catch (ClassNotFoundException e) {
-                    e.printStackTrace();
-                }
-                checkGameStatus();
-            }
+					Thread.sleep( 10 );
+				}
+				catch ( InterruptedException e )
+				{
+					e.printStackTrace();
+				}
+				catch ( IOException e )
+				{
+					e.printStackTrace();
+				}
+				catch ( ClassNotFoundException e )
+				{
+					e.printStackTrace();
+				}
+				checkGameStatus();
+			}
 
-            displayWinner();
+			displayWinner();
 
-        }).start();
-    }
+		} ).start();
+	}
 
-    public void initObjects() {
-        root = new Pane();
-        root.getStyleClass().add("background");
-        ImageView lineImage = new ImageView(new Image("line.png"));
-        lineImage.setX(GAME_WIDTH / 2);
+	public void initObjects()
+	{
+		root = new Pane();
+		root.getStyleClass().add( "background" );
+		ImageView lineImage = new ImageView( new Image( "line.png" ) );
+		lineImage.setX( GAME_WIDTH / 2 );
 
-        p1ScoreLabel = new Label(p1Name + p1Score);
-        p2ScoreLabel = new Label(p2Name + p2Score);
+		p1ScoreLabel = new Label( p1Name + p1Score );
+		p2ScoreLabel = new Label( p2Name + p2Score );
 
-        player = new Player();
-        opponent = new Player();
+		player = new Player();
+		opponent = new Player();
 
-        p1ScoreLabel.getStyleClass().add("p1-score");
-        p2ScoreLabel.getStyleClass().add("p2-score");
-        p2ScoreLabel.setLayoutX(GAME_WIDTH - 160);
-        root.getChildren().addAll(lineImage, p1ScoreLabel, p2ScoreLabel);
+		p1ScoreLabel.getStyleClass().add( "p1-score" );
+		p2ScoreLabel.getStyleClass().add( "p2-score" );
+		p2ScoreLabel.setLayoutX( GAME_WIDTH - 160 );
+		root.getChildren().addAll( lineImage, p1ScoreLabel, p2ScoreLabel );
 
-        ball = new Ball(25, 25, GAME_WIDTH / 2 - 12, GAME_HEIGHT / 2 - 12);
-        ball.getRect().getStyleClass().add("ball");
-        p1Paddle = new Paddle(0, GAME_HEIGHT / 2 - 40, PADDLE_WIDTH, PADDLE_HEIGHT);
-        p2Paddle = new Paddle(GAME_WIDTH - PADDLE_WIDTH, GAME_HEIGHT / 2 - 40, PADDLE_WIDTH, PADDLE_HEIGHT);
-        p1Paddle.getRect().getStyleClass().add("paddle");
-        p2Paddle.getRect().getStyleClass().add("paddle");
-    }
+		ball = new Ball( 25, 25, GAME_WIDTH / 2 - 12, GAME_HEIGHT / 2 - 12 );
+		ball.getRect().getStyleClass().add( "ball" );
+		p1Paddle = new Paddle( 0, GAME_HEIGHT / 2 - 40, PADDLE_WIDTH, PADDLE_HEIGHT );
+		p2Paddle = new Paddle( GAME_WIDTH - PADDLE_WIDTH, GAME_HEIGHT / 2 - 40, PADDLE_WIDTH, PADDLE_HEIGHT );
+		p1Paddle.getRect().getStyleClass().add( "paddle" );
+		p2Paddle.getRect().getStyleClass().add( "paddle" );
+	}
 
-    public void update() {
-        p1Paddle.update();
-        p2Paddle.update();
-        ball.update();
+	public void update()
+	{
+		p1Paddle.update();
+		p2Paddle.update();
+		ball.update();
 
-        if (ballCollide(p1Paddle)) {
-            p1Score++;
-            ball.onCollideWith(p1Paddle);
-        } else if (ballCollide(p2Paddle)) {
-            p2Score++;
-            ball.onCollideWith(p2Paddle);
-        } else if (ball.isDead()) {
-            if (ball.getX() < GAME_WIDTH / 2)
-                p1Score -= 1;
-            else
-                p2Score -= 1;
-        }
+		if (ballCollide( p1Paddle ))
+		{
+			p1Score++;
+			ball.onCollideWith( p1Paddle );
+		}
+		else if (ballCollide( p2Paddle ))
+		{
+			p2Score++;
+			ball.onCollideWith( p2Paddle );
+		}
+		else if (ball.isDead())
+		{
+			if (ball.getX() < GAME_WIDTH / 2) p1Score -= 1;
+			else p2Score -= 1;
+		}
 
-        render();
-    }
+		render();
+	}
 
-    public void countDownToStart() throws InterruptedException {
-        System.out.println("CountDown Started!!!!");
-        Label numLabel = new Label();
-        numLabel.getStyleClass().add("timer-text");
-        numLabel.setLayoutX(GAME_WIDTH / 2 - 25);
-        numLabel.setLayoutY(GAME_HEIGHT / 2 - 25);
+	public void countDownToStart() throws InterruptedException
+	{
+		System.out.println( "CountDown Started!!!!" );
+		Label numLabel = new Label();
+		numLabel.getStyleClass().add( "timer-text" );
+		numLabel.setLayoutX( GAME_WIDTH / 2 - 25 );
+		numLabel.setLayoutY( GAME_HEIGHT / 2 - 25 );
 
-        Platform.runLater(() -> root.getChildren().add(numLabel));
-        for (int i = 5; i > 0; i--) {
-            displayNum(numLabel, i);
-            Thread.sleep(1000);
-        }
-        Platform.runLater(() -> root.getChildren().remove(numLabel));
-    }
+		Platform.runLater( () -> root.getChildren().add( numLabel ) );
+		for ( int i = 5; i > 0; i-- )
+		{
+			displayNum( numLabel, i );
+			Thread.sleep( 1000 );
+		}
+		Platform.runLater( () -> root.getChildren().remove( numLabel ) );
+	}
 
-    private void displayNum(Label numLabel, int currentNum) {
-        Platform.runLater(() -> {
-            root.getChildren().remove(numLabel);
-            numLabel.setText(String.valueOf(currentNum));
-            root.getChildren().add(numLabel);
-        });
-    }
+	private void displayNum( Label numLabel, int currentNum )
+	{
+		Platform.runLater( () -> {
+			root.getChildren().remove( numLabel );
+			numLabel.setText( String.valueOf( currentNum ) );
+			root.getChildren().add( numLabel );
+		} );
+	}
 
-    public void checkGameStatus() {
-        if (p1Score >= 10 || p2Score >= 10) {
-            gameOver = true;
-            winner = p1Score >= 10 ? p1Name : p2Name;
-        }
-    }
+	public void checkGameStatus()
+	{
+		if (p1Score >= 10 || p2Score >= 10)
+		{
+			gameOver = true;
+			winner = p1Score >= 10 ? p1Name : p2Name;
+		}
+	}
 
-    public void displayWinner() {
-        Label winnerLabel = new Label(winner + " Wins!");
-        winnerLabel.getStyleClass().add("winner-text");
-        winnerLabel.setLayoutX(GAME_WIDTH / 2 - 150);
-        winnerLabel.setLayoutY(GAME_HEIGHT / 2);
-        Platform.runLater(() -> root.getChildren().add(winnerLabel));
-    }
+	public void displayWinner()
+	{
+		Label winnerLabel = new Label( winner + " Wins!" );
+		winnerLabel.getStyleClass().add( "winner-text" );
+		winnerLabel.setLayoutX( GAME_WIDTH / 2 - 150 );
+		winnerLabel.setLayoutY( GAME_HEIGHT / 2 );
+		Platform.runLater( () -> root.getChildren().add( winnerLabel ) );
+	}
 
-    private boolean ballCollide(Paddle p) {
-        return ball.getRect().intersects(p.getX(), p.getY(), p.getWidth(), p.getHeight());
-    }
+	private boolean ballCollide( Paddle p )
+	{
+		return ball.getRect().intersects( p.getX(), p.getY(), p.getWidth(), p.getHeight() );
+	}
 
-    public void render() {
-        if (p1Name == null) {
-            p1Name = "Player 1";
-            p2Name = "Player 2";
-        }
-        Platform.runLater(() -> {
-            p1ScoreLabel.setText(p1Name + ": " + p1Score);
-            p2ScoreLabel.setText(p2Name + ": " + p2Score);
-            root.getChildren().removeAll(p1Paddle.getRect(), p2Paddle.getRect(), ball.getRect());
-            root.getChildren().addAll(p1Paddle.getRect(), p2Paddle.getRect(), ball.getRect());
-        });
-    }
+	public void render()
+	{
+		if (p1Name == null)
+		{
+			p1Name = "Player 1";
+			p2Name = "Player 2";
+		}
+		Platform.runLater( () -> {
+			p1ScoreLabel.setText( p1Name + ": " + p1Score );
+			p2ScoreLabel.setText( p2Name + ": " + p2Score );
+			root.getChildren().removeAll( p1Paddle.getRect(), p2Paddle.getRect(), ball.getRect() );
+			root.getChildren().addAll( p1Paddle.getRect(), p2Paddle.getRect(), ball.getRect() );
+		} );
+	}
 }
