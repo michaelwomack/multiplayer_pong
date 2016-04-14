@@ -28,7 +28,7 @@ public class DatagramUtils {
     }
 
     public Object deserializeData(byte[] data) throws IOException, ClassNotFoundException {
-        ObjectInputStream input = new ObjectInputStream(new ByteArrayInputStream(data));
+        ObjectInputStream input = new ObjectInputStream(new BufferedInputStream(new ByteArrayInputStream(data)));
         Object o = input.readObject();
         input.close();
         return o;
@@ -36,8 +36,9 @@ public class DatagramUtils {
 
     public byte[] serializeData(Object o) throws IOException {
         ByteArrayOutputStream outputArray = new ByteArrayOutputStream();
-        ObjectOutput outputStream = new ObjectOutputStream(outputArray);
+        ObjectOutput outputStream = new ObjectOutputStream(new BufferedOutputStream(outputArray));
         outputStream.writeObject(o);
+        outputStream.flush();
         outputArray.close();
         outputStream.close();
         return outputArray.toByteArray();

@@ -146,36 +146,36 @@ public class Server extends Application implements PongConstants {
                     receivedPacket2 = util.receiveData();
 
                     /* deserialize into objects */
-                    obj1 = (GameObjectPositions) util.deserializeData(receivedPacket1.getData());
-                    obj2 = (GameObjectPositions) util.deserializeData(receivedPacket2.getData());
+                    //obj1 = (GameObjectPositions) util.deserializeData(receivedPacket1.getData());
+                    //obj2 = (GameObjectPositions) util.deserializeData(receivedPacket2.getData());
+
+//                    byte[] data1 = receivedPacket1.getData();
+//                    byte[] data2 = receivedPacket2.getData();
 
                     /* send data from packet1 to packet2 */
-                    util.sendData(util.serializeData(obj1),
+//                    util.sendData(util.serializeData(obj1),
+//                            receivedPacket2.getAddress(),
+//                            receivedPacket2.getPort());
+                    util.sendData(receivedPacket1.getData(),
                             receivedPacket2.getAddress(),
                             receivedPacket2.getPort());
 
+
                     /* send data from packet2 to packet1 */
-                    util.sendData(util.serializeData(obj2),
+//                    util.sendData(util.serializeData(obj2),
+//                            receivedPacket1.getAddress(),
+//                            receivedPacket1.getPort());
+
+                    util.sendData(receivedPacket2.getData(),
                             receivedPacket1.getAddress(),
                             receivedPacket1.getPort());
 
                     /* Just in case packet order not correct, use player 1's */
-                    if (obj1.getFromPlayer() == 1)
-                        gameStatus = obj1.getGameStatus();
-                    else
-                        gameStatus = obj2.getGameStatus();
+//                    if (obj1.getFromPlayer() == 1)
+//                        gameStatus = obj1.getGameStatus();
+//                    else
+//                        gameStatus = obj2.getGameStatus();
 
-
-
-                    /* Read data from player 2, send to player 1 */
-
-                    //dataFromPlayer1 = (GameObjectPositions) fromPlayer1.readObject();
-                    //dataFromPlayer2 = (GameObjectPositions) fromPlayer2.readObject();
-
-                    //toPlayer1.writeObject(dataFromPlayer2);
-                    //toPlayer2.writeObject(dataFromPlayer1);
-
-                    //gameStatus = dataFromPlayer1.getGameStatus();
                 }
 
             } catch (IOException e) {
