@@ -19,10 +19,7 @@ import main.model.Player;
 import main.util.DatagramUtils;
 
 import java.io.*;
-import java.net.DatagramPacket;
-import java.net.DatagramSocket;
-import java.net.InetAddress;
-import java.net.Socket;
+import java.net.*;
 
 public class PongClient extends Application implements PongConstants {
     private String winner;
@@ -99,6 +96,7 @@ public class PongClient extends Application implements PongConstants {
                     port = Integer.parseInt(portStr);
                     host = InetAddress.getByName(hostStr);
                     clientSocket = new Socket(host, port);
+                    System.out.println("Time out: " + clientSocket.getSoTimeout());
 
                     initObjects();
                     player.setName(playerName);
@@ -166,7 +164,7 @@ public class PongClient extends Application implements PongConstants {
                 p2Name = playerNo != PLAYER1 ? player.getName() : opponent.getName();
 
                 /* Matches unique datagram Socket port for each session */
-                sessionNo = (int)fromServer.readObject();
+                sessionNo = (int) fromServer.readObject();
                 port += sessionNo;
 
                 player.setPaddle(clientPaddle);
@@ -203,7 +201,7 @@ public class PongClient extends Application implements PongConstants {
             while (!gameOver) {
                 update();
                 try {
-
+                    datagramSocket.setSoTimeout(8);
                     if (player.getPlayerNo() == PLAYER1)
                         sendPositions = new GameObjectPositions(ball.getX(), ball.getY(),
                                 ball.getxVel(), ball.getyVel(), player.getPaddle().getY(),
@@ -232,6 +230,8 @@ public class PongClient extends Application implements PongConstants {
 
                     /* So frame rate is smooth */
                     Thread.sleep(10);
+                } catch (SocketTimeoutException e) {
+                    continue;
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 } catch (IOException e) {
