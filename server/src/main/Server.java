@@ -10,6 +10,7 @@ import javafx.stage.Stage;
 import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.net.SocketException;
 import java.util.Date;
 
 public class Server extends Application implements PongConstants
@@ -122,6 +123,10 @@ public class Server extends Application implements PongConstants
 				}
 
 			}
+            catch (SocketException e) {
+                Platform.runLater(() -> textArea.appendText(e.getMessage()));
+                System.exit(1);
+            }
 			catch ( IOException e )
 			{
 				e.printStackTrace();
@@ -130,6 +135,7 @@ public class Server extends Application implements PongConstants
 			{
 				e.printStackTrace();
 			}
+
 		}
 	}
 
