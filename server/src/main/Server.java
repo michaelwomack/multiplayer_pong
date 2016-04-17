@@ -137,7 +137,7 @@ public class Server extends Application implements PongConstants {
 
                 DatagramPacket receivedPacket1, receivedPacket2;
                 int gameStatus = 0;
-                socket.setSoTimeout(8);
+                socket.setSoTimeout(10);
 
                 while (gameStatus != PLAYER1_WON || gameStatus != PLAYER2_WON) {
                     try {

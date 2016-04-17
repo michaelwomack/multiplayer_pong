@@ -185,7 +185,7 @@ public class PongClient extends Application implements PongConstants {
 
                 Platform.runLater(() -> stage.setTitle("You are player " + playerNo));
                 countDownToStart();
-                datagramSocket.setSoTimeout(5);
+                datagramSocket.setSoTimeout(10);
 
             } catch (IOException e) {
                 e.printStackTrace();
@@ -199,8 +199,18 @@ public class PongClient extends Application implements PongConstants {
             GameObjectPositions sendPositions, updatedPositions;
             DatagramPacket receivedPacket;
 
+            new Thread(() -> {
+               while (!gameOver) {
+                   update();
+                   try {
+                       Thread.sleep(10);
+                   } catch (InterruptedException e) {
+                       e.printStackTrace();
+                   }
+               }
+            }).start();
+
             while (!gameOver) {
-                update();
                 try {
 
                     if (player.getPlayerNo() == PLAYER1)
@@ -229,11 +239,9 @@ public class PongClient extends Application implements PongConstants {
                     opponent.getPaddle().setVelY(updatedPositions.getOpponentVelY());
 
                     /* So frame rate is smooth */
-                    Thread.sleep(10);
+                    //Thread.sleep(10);
                 } catch (SocketTimeoutException e) {
                     continue;
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
                 } catch (IOException e) {
                     e.printStackTrace();
                 } catch (ClassNotFoundException e) {
