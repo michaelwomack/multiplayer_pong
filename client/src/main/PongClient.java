@@ -185,8 +185,8 @@ public class PongClient extends Application implements PongConstants {
 
                 Platform.runLater(() -> stage.setTitle("You are player " + playerNo));
                 countDownToStart();
-                datagramSocket.setSoTimeout(8);
-//
+                datagramSocket.setSoTimeout(10);
+
             } catch (IOException e) {
                 e.printStackTrace();
             } catch (ClassNotFoundException e) {
@@ -225,10 +225,8 @@ public class PongClient extends Application implements PongConstants {
                         ball.setyVel(updatedPositions.getBallVelY());
                     }
 
-                    if (opponent.getPaddle().getVelY() != 0) {
-                        opponent.getPaddle().getRect().setY(updatedPositions.getOpponentY());
-                        opponent.getPaddle().setVelY(updatedPositions.getOpponentVelY());
-                    }
+                    opponent.getPaddle().getRect().setY(updatedPositions.getOpponentY());
+                    opponent.getPaddle().setVelY(updatedPositions.getOpponentVelY());
 
                     /* So frame rate is smooth */
                     Thread.sleep(10);
@@ -328,7 +326,7 @@ public class PongClient extends Application implements PongConstants {
     public void displayWinner() {
         Label winnerLabel = new Label(winner + " Wins!");
         winnerLabel.getStyleClass().add("winner-text");
-        winnerLabel.setLayoutX(GAME_WIDTH / 2 - 150);
+        winnerLabel.setLayoutX(GAME_WIDTH / 2 - winnerLabel.getWidth() / 2);
         winnerLabel.setLayoutY(GAME_HEIGHT / 2);
         Platform.runLater(() -> root.getChildren().add(winnerLabel));
     }
