@@ -212,12 +212,11 @@ public class PongClient extends Application implements PongConstants {
                                 player.getPaddle().getVelY());
 
                     }
-                    //toServer.writeObject(sendPositions);
+
                     util.sendData(util.serializeData(sendPositions), host, port);
 
                     receivedPacket = util.receiveData();
                     updatedPositions = (GameObjectPositions) util.deserializeData(receivedPacket.getData());
-                    //updatedPositions = (GameObjectPositions) fromServer.readObject();
 
                     if (player.getPlayerNo() == PLAYER2) {
                         ball.setX(updatedPositions.getBallX());
@@ -226,8 +225,10 @@ public class PongClient extends Application implements PongConstants {
                         ball.setyVel(updatedPositions.getBallVelY());
                     }
 
-                    opponent.getPaddle().getRect().setY(updatedPositions.getOpponentY());
-                    opponent.getPaddle().setVelY(updatedPositions.getOpponentVelY());
+                    if (opponent.getPaddle().getVelY() != 0) {
+                        opponent.getPaddle().getRect().setY(updatedPositions.getOpponentY());
+                        opponent.getPaddle().setVelY(updatedPositions.getOpponentVelY());
+                    }
 
                     /* So frame rate is smooth */
                     Thread.sleep(10);
