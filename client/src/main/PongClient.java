@@ -185,6 +185,7 @@ public class PongClient extends Application implements PongConstants {
 
                 Platform.runLater(() -> stage.setTitle("You are player " + playerNo));
                 countDownToStart();
+                datagramSocket.setSoTimeout(8);
 //
             } catch (IOException e) {
                 e.printStackTrace();
@@ -201,7 +202,7 @@ public class PongClient extends Application implements PongConstants {
             while (!gameOver) {
                 update();
                 try {
-                    datagramSocket.setSoTimeout(8);
+
                     if (player.getPlayerNo() == PLAYER1)
                         sendPositions = new GameObjectPositions(ball.getX(), ball.getY(),
                                 ball.getxVel(), ball.getyVel(), player.getPaddle().getY(),

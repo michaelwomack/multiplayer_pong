@@ -136,46 +136,24 @@ public class Server extends Application implements PongConstants {
                 System.out.println("Data from player 2: " + util.deserializeData(player2Packet.getData()));
 
                 DatagramPacket receivedPacket1, receivedPacket2;
-                GameObjectPositions obj1, obj2;
                 int gameStatus = 0;
-
                 socket.setSoTimeout(8);
+
                 while (gameStatus != PLAYER1_WON || gameStatus != PLAYER2_WON) {
                     try {
+
                     /* Read data from players packets */
                         receivedPacket1 = util.receiveData();
                         receivedPacket2 = util.receiveData();
 
-                    /* deserialize into objects */
-                        //obj1 = (GameObjectPositions) util.deserializeData(receivedPacket1.getData());
-                        //obj2 = (GameObjectPositions) util.deserializeData(receivedPacket2.getData());
-
-//                    byte[] data1 = receivedPacket1.getData();
-//                    byte[] data2 = receivedPacket2.getData();
-
-                    /* send data from packet1 to packet2 */
-//                    util.sendData(util.serializeData(obj1),
-//                            receivedPacket2.getAddress(),
-//                            receivedPacket2.getPort());
                         util.sendData(receivedPacket1.getData(),
                                 receivedPacket2.getAddress(),
                                 receivedPacket2.getPort());
-
-
-                    /* send data from packet2 to packet1 */
-//                    util.sendData(util.serializeData(obj2),
-//                            receivedPacket1.getAddress(),
-//                            receivedPacket1.getPort());
 
                         util.sendData(receivedPacket2.getData(),
                                 receivedPacket1.getAddress(),
                                 receivedPacket1.getPort());
 
-                    /* Just in case packet order not correct, use player 1's */
-//                    if (obj1.getFromPlayer() == 1)
-//                        gameStatus = obj1.getGameStatus();
-//                    else
-//                        gameStatus = obj2.getGameStatus();
                     } catch (SocketTimeoutException e) {
                         continue;
                     }
