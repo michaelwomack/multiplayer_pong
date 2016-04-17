@@ -185,7 +185,7 @@ public class PongClient extends Application implements PongConstants {
 
                 Platform.runLater(() -> stage.setTitle("You are player " + playerNo));
                 countDownToStart();
-                datagramSocket.setSoTimeout(10);
+                datagramSocket.setSoTimeout(5);
 
             } catch (IOException e) {
                 e.printStackTrace();
