@@ -137,7 +137,7 @@ public class Server extends Application implements PongConstants {
 
                 DatagramPacket receivedPacket1, receivedPacket2;
                 int gameStatus = 0;
-                //socket.setSoTimeout(10);
+                socket.setSoTimeout(8);
 
                 while (gameStatus != PLAYER1_WON || gameStatus != PLAYER2_WON) {
                     try {
@@ -146,13 +146,22 @@ public class Server extends Application implements PongConstants {
                         receivedPacket1 = util.receiveData();
                         receivedPacket2 = util.receiveData();
 
-                        util.sendData(receivedPacket1.getData(),
-                                receivedPacket2.getAddress(),
-                                receivedPacket2.getPort());
 
-                        util.sendData(receivedPacket2.getData(),
-                                receivedPacket1.getAddress(),
-                                receivedPacket1.getPort());
+                        //If packets are from different addresses
+                      if (!receivedPacket1.getAddress().equals(receivedPacket2.getAddress())) {
+
+                          System.out.println(receivedPacket1.getAddress());
+                          System.out.println(receivedPacket2.getAddress());
+                          util.sendData(receivedPacket1.getData(),
+                                  receivedPacket2.getAddress(),
+                                  receivedPacket2.getPort());
+
+                          util.sendData(receivedPacket2.getData(),
+                                  receivedPacket1.getAddress(),
+                                  receivedPacket1.getPort());
+                      }
+
+
 
                     } catch (SocketTimeoutException e) {
                         continue;

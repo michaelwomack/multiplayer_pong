@@ -210,6 +210,7 @@ public class PongClient extends Application implements PongConstants {
 //               }
 //            }).start();
 
+            long lastPacketTime = 0;
             while (!gameOver) {
 
                 try {
@@ -227,20 +228,25 @@ public class PongClient extends Application implements PongConstants {
                     util.sendData(util.serializeData(sendPositions), host, port);
 
                     receivedPacket = util.receiveData();
+                    System.out.println(receivedPacket.getAddress());
+
                     updatedPositions = (GameObjectPositions) util.deserializeData(receivedPacket.getData());
 
-                    if (player.getPlayerNo() == PLAYER2) {
-                        ball.setX(updatedPositions.getBallX());
-                        ball.setY(updatedPositions.getBallY());
-                        ball.setxVel(updatedPositions.getBallVelX());
-                        ball.setyVel(updatedPositions.getBallVelY());
-                    }
+                    if (updatedPositions.getTime() > lastPacketTime) {
+                        if (player.getPlayerNo() == PLAYER2) {
+                            ball.setX(updatedPositions.getBallX());
+                            ball.setY(updatedPositions.getBallY());
+                            ball.setxVel(updatedPositions.getBallVelX());
+                            ball.setyVel(updatedPositions.getBallVelY());
+                        }
 
-                    opponent.getPaddle().getRect().setY(updatedPositions.getOpponentY());
-                    opponent.getPaddle().setVelY(updatedPositions.getOpponentVelY());
+                        opponent.getPaddle().getRect().setY(updatedPositions.getOpponentY());
+                        opponent.getPaddle().setVelY(updatedPositions.getOpponentVelY());
 
+                        lastPacketTime = updatedPositions.getTime();
                     /* So frame rate is smooth */
-                    Thread.sleep(10);
+                        Thread.sleep(10);
+                    }
                 } catch (SocketTimeoutException e) {
                     continue;
                 } catch (IOException e) {

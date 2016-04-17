@@ -2,17 +2,20 @@ package main;
 
 
 import java.io.Serializable;
+import java.time.LocalTime;
+import java.util.Date;
 
 /**
  * Created by michaelwomack on 3/31/16.
  */
 public class GameObjectPositions implements Serializable {
     private int ballX, ballY, ballXVel, ballYVel, opponentY, opponentYVel, fromPlayer, gameStatus;
-
+    private Long time;
     public GameObjectPositions(int opponentY, int opponentYVel) {
         this.opponentY = opponentY;
         this.opponentYVel = opponentYVel;
         this.fromPlayer = 2;
+        this.time = System.nanoTime();
     }
 
     public GameObjectPositions(int ballX, int ballY, int ballVelX, int ballYVel, int opponentY, int opponentYVel) {
@@ -23,6 +26,8 @@ public class GameObjectPositions implements Serializable {
         this.opponentY = opponentY;
         this.opponentYVel = opponentYVel;
         this.fromPlayer = 1;
+        this.time = System.nanoTime();
+
     }
 
     public int getBallX() {
@@ -47,6 +52,10 @@ public class GameObjectPositions implements Serializable {
 
     public int getOpponentVelY() {
         return opponentYVel;
+    }
+
+    public Long getTime() {
+        return time;
     }
 
     public int getFromPlayer() {
