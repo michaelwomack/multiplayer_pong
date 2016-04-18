@@ -7,9 +7,7 @@ import javafx.scene.control.ScrollPane;
 import javafx.scene.control.TextArea;
 import javafx.stage.Stage;
 
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
+import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.Date;
@@ -57,10 +55,10 @@ public class Server extends Application implements PongConstants {
     class SessionHandler implements Runnable, PongConstants {
         private Socket player1, player2;
 
-        private ObjectOutputStream toPlayer1;
-        private ObjectInputStream fromPlayer1;
-        private ObjectOutputStream toPlayer2;
-        private ObjectInputStream fromPlayer2;
+        private DataOutputStream toPlayer1;
+        private DataInputStream fromPlayer1;
+        private DataOutputStream toPlayer2;
+        private DataInputStream fromPlayer2;
 
         public SessionHandler(Socket player1, Socket player2) {
             this.player1 = player1;
@@ -72,37 +70,78 @@ public class Server extends Application implements PongConstants {
         public void run() {
 
             try {
-                toPlayer1 = new ObjectOutputStream(player1.getOutputStream());
-                toPlayer2 = new ObjectOutputStream(player2.getOutputStream());
+                toPlayer1 = new DataOutputStream(new BufferedOutputStream(player1.getOutputStream()));
+                toPlayer2 = new DataOutputStream(new BufferedOutputStream(player2.getOutputStream()));
 
-                fromPlayer1 = new ObjectInputStream(player1.getInputStream());
-                fromPlayer2 = new ObjectInputStream(player2.getInputStream());
+                toPlayer1.flush();
 
-                toPlayer1.writeObject(PLAYER1);
-                toPlayer2.writeObject(PLAYER2);
+                System.out.println("Output streams created");
 
-                String p1Name = (String) fromPlayer1.readObject();
-                String p2Name = (String) fromPlayer2.readObject();
+                fromPlayer1 = new DataInputStream(new BufferedInputStream(player1.getInputStream()));
+                fromPlayer2 = new DataInputStream(new BufferedInputStream(player2.getInputStream()));
 
-                toPlayer1.writeObject(p2Name);
-                toPlayer2.writeObject(p1Name);
+                System.out.println("Input streams created");
+                toPlayer1.writeInt(PLAYER1);
+                toPlayer1.flush();
+                System.out.println("Player 1 no sent");
+                toPlayer2.writeInt(PLAYER2);
+                toPlayer2.flush();
+                System.out.println("Player 2 no sent");
 
-                GameObjectPositions dataFromPlayer1, dataFromPlayer2;
+                String p1Name = fromPlayer1.readUTF();
+                String p2Name = fromPlayer2.readUTF();
+
+                toPlayer1.writeUTF(p2Name);
+                toPlayer1.flush();
+                toPlayer2.writeUTF(p1Name);
+                toPlayer2.flush();
+
                 int gameStatus = 0;
                 while (gameStatus != PLAYER1_WON || gameStatus != PLAYER2_WON) {
                     /* Read Opponent Coordinates from both and Ball Data from Player 1 */
-                    dataFromPlayer1 = (GameObjectPositions) fromPlayer1.readObject();
-                    dataFromPlayer2 = (GameObjectPositions) fromPlayer2.readObject();
+                    //ball x
+                    toPlayer2.writeInt(fromPlayer1.readInt());
+                    toPlayer2.flush();
 
-                    toPlayer1.writeObject(dataFromPlayer2);
-                    toPlayer2.writeObject(dataFromPlayer1);
+                    //ball y
+                    toPlayer2.writeInt(fromPlayer1.readInt());
+                    toPlayer2.flush();
 
-                    gameStatus = dataFromPlayer1.getGameStatus();
+                    //ball x vel
+                    toPlayer2.writeInt(fromPlayer1.readInt());
+                    toPlayer2.flush();
+
+                    //bal y vel
+                    toPlayer2.writeInt(fromPlayer1.readInt());
+                    toPlayer2.flush();
+
+                    //p1
+//                    int p1Score = fromPlayer1.readInt();
+//                    int p2Score = fromPlayer2.readInt();
+
+                    //paddle y from player 1
+                    toPlayer2.writeInt(fromPlayer1.readInt());
+                    toPlayer2.flush();
+
+                    //paddle y vel from player 1
+                    toPlayer2.writeInt(fromPlayer1.readInt());
+                    toPlayer2.flush();
+
+                    //paddle y from player 2
+                    toPlayer1.writeInt(fromPlayer2.readInt());
+                    toPlayer1.flush();
+
+                    //paddle y vel from player 2
+                    toPlayer1.writeInt(fromPlayer2.readInt());
+                    toPlayer1.flush();
+
+//
+//                    gameStatus = p1Score >= 10 ? PLAYER1_WON : 0;
+//                    gameStatus = p2Score >= 10 ? PLAYER2_WON : gameStatus;
                 }
 
+
             } catch (IOException e) {
-                e.printStackTrace();
-            } catch (ClassNotFoundException e) {
                 e.printStackTrace();
             }
         }

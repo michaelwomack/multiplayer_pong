@@ -17,15 +17,13 @@ import main.model.Ball;
 import main.model.Paddle;
 import main.model.Player;
 
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
+import java.io.*;
 import java.net.Socket;
 
 public class PongClient extends Application implements PongConstants {
     private String host, port, winner;
-    private ObjectOutputStream toServer;
-    private ObjectInputStream fromServer;
+    private DataOutputStream toServer;
+    private DataInputStream fromServer;
     private Socket clientSocket;
     private Label p1ScoreLabel, p2ScoreLabel, errorLabel;
     private int p1Score, p2Score;
@@ -135,18 +133,23 @@ public class PongClient extends Application implements PongConstants {
 
         new Thread(() -> {
             try {
-                toServer = new ObjectOutputStream(clientSocket.getOutputStream());
-                fromServer = new ObjectInputStream(clientSocket.getInputStream());
+                toServer = new DataOutputStream(new BufferedOutputStream(clientSocket.getOutputStream()));
+                toServer.flush();
+                fromServer = new DataInputStream(new BufferedInputStream(clientSocket.getInputStream()));
 
-                int playerNo = (Integer) fromServer.readObject() == PLAYER1 ? PLAYER1 : PLAYER2;
+                System.out.println("out and in stream created");
+                int playerNo = fromServer.readInt() == PLAYER1 ? PLAYER1 : PLAYER2;
                 player.setPlayerNo(playerNo);
+
+                System.out.println("player no received.");
 
                 System.out.println("Player: " + playerNo);
                 int opponentNo = playerNo == PLAYER1 ? PLAYER2 : PLAYER1;
                 opponent.setPlayerNo(opponentNo);
 
-                toServer.writeObject(player.getName());
-                opponent.setName((String) fromServer.readObject());
+                toServer.writeUTF(player.getName());
+                toServer.flush();
+                opponent.setName(fromServer.readUTF());
 
                 Paddle clientPaddle = playerNo == PLAYER1 ? p1Paddle : p2Paddle;
                 Paddle opponentPaddle = opponentNo == PLAYER1 ? p1Paddle : p2Paddle;
@@ -166,48 +169,54 @@ public class PongClient extends Application implements PongConstants {
 
             } catch (IOException e) {
                 e.printStackTrace();
-            } catch (ClassNotFoundException e) {
-                e.printStackTrace();
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
 
             gameOver = false;
-            GameObjectPositions sendPositions, updatedPositions;
 
             while (!gameOver) {
                 update();
                 try {
 
-                    if (player.getPlayerNo() == PLAYER1)
-                        sendPositions = new GameObjectPositions(ball.getX(), ball.getY(),
-                                ball.getxVel(), ball.getyVel(), player.getPaddle().getY(),
-                                player.getPaddle().getVelY());
-                    else {
-                        sendPositions = new GameObjectPositions(player.getPaddle().getY(),
-                                player.getPaddle().getVelY());
-                    }
-                    toServer.writeObject(sendPositions);
+                    if (player.getPlayerNo() == PLAYER1) {
+                        toServer.writeInt(ball.getX());
+                        toServer.flush();
+                        toServer.writeInt(ball.getY());
+                        toServer.flush();
+                        toServer.writeInt(ball.getyVel());
+                        toServer.flush();
+                        toServer.writeInt(ball.getxVel());
+                        toServer.flush();
 
-                    updatedPositions = (GameObjectPositions) fromServer.readObject();
+//                        toServer.writeInt(p1Score);
+                    }
+
+//                    if (player.getPlayerNo() == PLAYER2)
+//                        toServer.writeInt(p2Score);
+
+                    toServer.writeInt(player.getPaddle().getY());
+                    toServer.flush();
+
+                    toServer.writeInt(player.getPaddle().getVelY());
+                    toServer.flush();
+
 
                     if (player.getPlayerNo() == PLAYER2) {
-                        ball.setX(updatedPositions.getBallX());
-                        ball.setY(updatedPositions.getBallY());
-                        ball.setxVel(updatedPositions.getBallVelX());
-                        ball.setyVel(updatedPositions.getBallVelY());
+                        ball.setX(fromServer.readInt());
+                        ball.setY(fromServer.readInt());
+                        ball.setxVel(fromServer.readInt());
+                        ball.setyVel(fromServer.readInt());
                     }
 
-                    opponent.getPaddle().getRect().setY(updatedPositions.getOpponentY());
-                    opponent.getPaddle().setVelY(updatedPositions.getOpponentVelY());
+                    opponent.getPaddle().getRect().setY(fromServer.readInt());
+                    opponent.getPaddle().setVelY(fromServer.readInt());
 
                     /* So frame rate is smooth */
                     Thread.sleep(10);
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 } catch (IOException e) {
-                    e.printStackTrace();
-                } catch (ClassNotFoundException e) {
                     e.printStackTrace();
                 }
                 checkGameStatus();
