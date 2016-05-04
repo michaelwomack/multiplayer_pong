@@ -173,23 +173,23 @@ public class PongClient extends Application implements PongConstants {
             }
 
             gameOver = false;
-            GameObjectPositions sendPositions, updatedPositions;
+            GameState sendPositions, updatedPositions;
 
             while (!gameOver) {
                 update();
                 try {
 
                     if (player.getPlayerNo() == PLAYER1)
-                        sendPositions = new GameObjectPositions(ball.getX(), ball.getY(),
+                        sendPositions = new GameState(ball.getX(), ball.getY(),
                                 ball.getxVel(), ball.getyVel(), player.getPaddle().getY(),
                                 player.getPaddle().getVelY());
                     else {
-                        sendPositions = new GameObjectPositions(player.getPaddle().getY(),
+                        sendPositions = new GameState(player.getPaddle().getY(),
                                 player.getPaddle().getVelY());
                     }
                     toServer.writeObject(sendPositions);
 
-                    updatedPositions = (GameObjectPositions) fromServer.readObject();
+                    updatedPositions = (GameState) fromServer.readObject();
 
                     if (player.getPlayerNo() == PLAYER2) {
                         ball.setX(updatedPositions.getBallX());

@@ -87,12 +87,12 @@ public class Server extends Application implements PongConstants {
                 toPlayer1.writeObject(p2Name);
                 toPlayer2.writeObject(p1Name);
 
-                GameObjectPositions dataFromPlayer1, dataFromPlayer2;
+                GameState dataFromPlayer1, dataFromPlayer2;
                 int gameStatus = 0;
                 while (gameStatus != PLAYER1_WON || gameStatus != PLAYER2_WON) {
                     /* Read Opponent Coordinates from both and Ball Data from Player 1 */
-                    dataFromPlayer1 = (GameObjectPositions) fromPlayer1.readObject();
-                    dataFromPlayer2 = (GameObjectPositions) fromPlayer2.readObject();
+                    dataFromPlayer1 = (GameState) fromPlayer1.readObject();
+                    dataFromPlayer2 = (GameState) fromPlayer2.readObject();
 
                     toPlayer1.writeObject(dataFromPlayer2);
                     toPlayer2.writeObject(dataFromPlayer1);
